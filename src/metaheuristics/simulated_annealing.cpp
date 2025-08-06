@@ -6,6 +6,7 @@
 #include <iostream>
 #include <chrono>
 #include <cmath>
+#include <algorithm>
 
 SimulatedAnnealing::SimulatedAnnealing(const Instance& instance, ConstraintEvaluator& evaluator,
                                        double initial_temp, double cooling, int max_iter, int stagnation)
@@ -52,14 +53,31 @@ Schedule SimulatedAnnealing::solve(SolveMode mode) {
         }
 
         if (stagnated > stagnation_limit) {
+            std::cout << "--- ESTANCAMIENTO DETECTADO! RECALENTANDO Y PERTURBANDO ---" << std::endl;
+            
+            // 1. Vuelve a la mejor solución encontrada hasta ahora.
             current_schedule = best_schedule;
-            neighborhood.perturb(current_schedule, 0.20); // 20% perturbation
+            
+            // 2. Perturba la solución para sacarla del óptimo local.
+            //    Esto es CRÍTICO. Si no la mueves, se volverá a atascar en el mismo sitio.
+            //    Un 10-20% de perturbación suele ser un buen punto de partida.
+            neighborhood.perturb(current_schedule, 0.15); // Perturba el 15% de las asignaciones
+
+            // 3. ¡MUY IMPORTANTE! Resetea el evaluador incremental.
+            //    Como hemos modificado el schedule manualmente, la puntuación cacheada es inválida.
             incremental_evaluator.reset(current_schedule);
-            temperature = initial_temperature;
+            
+            // 4. Recalienta el sistema. Reinicia la temperatura a su valor inicial.
+            temperature = initial_temperature; 
+            
+            // 5. Resetea el contador de estancamiento.
             stagnated = 0;
         }
 
-        temperature *= cooling_rate;
+        const double MINIMUM_TEMPERATURE = 1e-8; // Un valor pequeño pero no cero
+
+        // Enfría la temperatura, pero no por debajo del mínimo.
+        temperature = std::max(temperature * cooling_rate, MINIMUM_TEMPERATURE);
         
         if (i % 100 == 0) {
             std::cout << "Iteration " << i << ": "

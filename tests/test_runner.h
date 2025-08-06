@@ -13,9 +13,8 @@ private:
     int tests_failed;
     std::vector<std::string> failed_tests;
     
-    void logTest(const std::string& test_name, bool passed, const std::string& message = "");
-    
 public:
+    void logTest(const std::string& test_name, bool passed, const std::string& message = "");
     TestRunner();
     
     // Test execution methods

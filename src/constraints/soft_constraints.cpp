@@ -29,17 +29,27 @@ int SoftConstraints::findShiftIndex(const std::string& shift_id) const {
 
 int SoftConstraints::evaluateShiftOnRequests(const Schedule& schedule) const {
     int score = 0;
+    int num_employees = schedule.getNumEmployees();
+    for (int emp = 0; emp < num_employees; emp++) {
+        score += evaluateShiftOnRequests(schedule, emp);
+    }
+    return score;
+}
+
+int SoftConstraints::evaluateShiftOnRequests(const Schedule& schedule, int employee_id) const {
+    int score = 0;
     const auto& on_requests = instance.getShiftOnRequests();
-    
+    const Staff& worker = instance.getStaff(employee_id);
+
     for (const auto& request : on_requests) {
-        int employee_index = findEmployeeIndex(request.EmployeeID);
-        
-        if (employee_index >= 0 && request.Day >= 0 && request.Day < schedule.getHorizonDays()) {
-            int assigned_shift = schedule.getAssignment(employee_index, request.Day);
-            if (assigned_shift != 0) {
-                const Shift& shift_info = instance.getShift(assigned_shift - 1);
-                if (shift_info.ShiftID == request.ShiftID) {
-                    score += request.Weight;
+        if (request.EmployeeID == worker.ID) {
+            if (request.Day >= 0 && request.Day < schedule.getHorizonDays()) {
+                int assigned_shift = schedule.getAssignment(employee_id, request.Day);
+                if (assigned_shift != 0) {
+                    const Shift& shift_info = instance.getShift(assigned_shift - 1);
+                    if (shift_info.ShiftID == request.ShiftID) {
+                        score += request.Weight;
+                    }
                 }
             }
         }
@@ -49,17 +59,27 @@ int SoftConstraints::evaluateShiftOnRequests(const Schedule& schedule) const {
 
 int SoftConstraints::evaluateShiftOffRequests(const Schedule& schedule) const {
     int score = 0;
+    int num_employees = schedule.getNumEmployees();
+    for (int emp = 0; emp < num_employees; emp++) {
+        score += evaluateShiftOffRequests(schedule, emp);
+    }
+    return score;
+}
+
+int SoftConstraints::evaluateShiftOffRequests(const Schedule& schedule, int employee_id) const {
+    int score = 0;
     const auto& off_requests = instance.getShiftOffRequests();
-    
+    const Staff& worker = instance.getStaff(employee_id);
+
     for (const auto& request : off_requests) {
-        int employee_index = findEmployeeIndex(request.EmployeeID);
-        
-        if (employee_index >= 0 && request.Day >= 0 && request.Day < schedule.getHorizonDays()) {
-            int assigned_shift = schedule.getAssignment(employee_index, request.Day);
-            if (assigned_shift != 0) {
-                const Shift& shift_info = instance.getShift(assigned_shift - 1);
-                if (shift_info.ShiftID == request.ShiftID) {
-                    score += request.Weight; // Note: Weight should be negative for off-requests
+        if (request.EmployeeID == worker.ID) {
+            if (request.Day >= 0 && request.Day < schedule.getHorizonDays()) {
+                int assigned_shift = schedule.getAssignment(employee_id, request.Day);
+                if (assigned_shift != 0) {
+                    const Shift& shift_info = instance.getShift(assigned_shift - 1);
+                    if (shift_info.ShiftID == request.ShiftID) {
+                        score += request.Weight; // Note: Weight should be negative for off-requests
+                    }
                 }
             }
         }
@@ -113,39 +133,8 @@ int SoftConstraints::evaluateEmployee(const Schedule& schedule, int employee) co
     }
     
     int score = 0;
-    const Staff& staff = instance.getStaff(employee);
-    
-    // Check shift-on requests for this employee
-    const auto& on_requests = instance.getShiftOnRequests();
-    for (const auto& request : on_requests) {
-        if (request.EmployeeID == staff.ID) {
-            if (request.Day >= 0 && request.Day < schedule.getHorizonDays()) {
-                int assigned_shift = schedule.getAssignment(employee, request.Day);
-                if (assigned_shift != 0) {
-                    const Shift& shift_info = instance.getShift(assigned_shift - 1);
-                    if (shift_info.ShiftID == request.ShiftID) {
-                        score += request.Weight;
-                    }
-                }
-            }
-        }
-    }
-    
-    // Check shift-off requests for this employee
-    const auto& off_requests = instance.getShiftOffRequests();
-    for (const auto& request : off_requests) {
-        if (request.EmployeeID == staff.ID) {
-            if (request.Day >= 0 && request.Day < schedule.getHorizonDays()) {
-                int assigned_shift = schedule.getAssignment(employee, request.Day);
-                if (assigned_shift != 0) {
-                    const Shift& shift_info = instance.getShift(assigned_shift - 1);
-                    if (shift_info.ShiftID == request.ShiftID) {
-                        score += request.Weight;
-                    }
-                }
-            }
-        }
-    }
+    score += evaluateShiftOnRequests(schedule, employee);
+    score += evaluateShiftOffRequests(schedule, employee);
     
     return score;
 }

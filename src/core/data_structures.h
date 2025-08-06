@@ -8,6 +8,12 @@
 // Forward declarations
 class Instance;
 
+#include <string>
+#include <unordered_map>
+
+// Forward declarations
+class Instance;
+
 /**
  * Represents a staff member with all their constraints and preferences
  */

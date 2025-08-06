@@ -1,6 +1,7 @@
 #ifndef TEST_SOFT_CONSTRAINTS_H
 #define TEST_SOFT_CONSTRAINTS_H
 
+#include "test_runner.h"
 #include <string>
 #include <vector>
 
@@ -40,5 +41,7 @@ public:
     void printResults();
     bool allTestsPassed() const;
 };
+
+void registerSoftConstraintTests(TestRunner& runner);
 
 #endif // TEST_SOFT_CONSTRAINTS_H

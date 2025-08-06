@@ -362,3 +362,9 @@ void TestSoftConstraints::printResults() {
 bool TestSoftConstraints::allTestsPassed() const {
     return tests_failed == 0;
 }
+
+void registerSoftConstraintTests(TestRunner& runner) {
+    TestSoftConstraints tests;
+    tests.runAllTests();
+    runner.logTest("Soft Constraints Suite", tests.allTestsPassed());
+}

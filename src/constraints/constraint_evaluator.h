@@ -17,7 +17,9 @@ public:
     double evaluateSchedule(const Schedule& schedule);
     bool isFeasible(const Schedule& schedule);
     double getHardConstraintViolations(const Schedule& schedule);
-    double getSoftConstraintPenalties(const Schedule& schedule);
+    double getSoftConstraintViolations(const Schedule& schedule);
+    double getEmployeeHardConstraintViolations(const Schedule& schedule, int employee_id);
+    double getEmployeeSoftConstraintViolations(const Schedule& schedule, int employee_id);
 };
 
 #endif // CONSTRAINT_EVALUATOR_H

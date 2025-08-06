@@ -82,16 +82,21 @@ int HardConstraints::evaluateMaxOneShiftPerDay(const Schedule& schedule) const {
 int HardConstraints::evaluateShiftRotation(const Schedule& schedule) const {
     int penalty = 0;
     int num_employees = schedule.getNumEmployees();
-    int horizon = schedule.getHorizonDays();
-    
     for (int emp = 0; emp < num_employees; emp++) {
-        for (int day = 0; day < horizon - 1; day++) {
-            int current_shift = schedule.getAssignment(emp, day);
-            int next_shift = schedule.getAssignment(emp, day + 1);
-            
-            if (!isValidShiftTransition(current_shift, next_shift)) {
-                penalty -= 100; // High penalty for rotation violations
-            }
+        penalty += evaluateShiftRotation(schedule, emp);
+    }
+    return penalty;
+}
+
+int HardConstraints::evaluateShiftRotation(const Schedule& schedule, int employee_id) const {
+    int penalty = 0;
+    int horizon = schedule.getHorizonDays();
+    for (int day = 0; day < horizon - 1; day++) {
+        int current_shift = schedule.getAssignment(employee_id, day);
+        int next_shift = schedule.getAssignment(employee_id, day + 1);
+        
+        if (!isValidShiftTransition(current_shift, next_shift)) {
+            penalty -= 100; // High penalty for rotation violations
         }
     }
     return penalty;
@@ -100,16 +105,23 @@ int HardConstraints::evaluateShiftRotation(const Schedule& schedule) const {
 int HardConstraints::evaluateMaxShiftsPerType(const Schedule& schedule) const {
     int penalty = 0;
     int num_employees = schedule.getNumEmployees();
-    int num_shifts = instance.getNumShiftTypes();
-    
     for (int emp = 0; emp < num_employees; emp++) {
-        const Staff& worker = instance.getStaff(emp);
+        penalty += evaluateMaxShiftsPerType(schedule, emp);
+    }
+    return penalty;
+}
+
+int HardConstraints::evaluateMaxShiftsPerType(const Schedule& schedule, int employee_id) const {
+    int penalty = 0;
+    int num_shifts = instance.getNumShiftTypes();
+    const Staff& worker = instance.getStaff(employee_id);
+    
+    for (int shift_type = 1; shift_type <= num_shifts; shift_type++) {
+        int shift_count = schedule.getShiftCount(employee_id, shift_type);
         
-        for (int shift_type = 1; shift_type <= num_shifts; shift_type++) {
-            int shift_count = schedule.getShiftCount(emp, shift_type);
-            
-            // Check max shifts constraint
-            if (shift_type - 1 < static_cast<int>(worker.MaxShifts.size())) {
+        // Check max shifts constraint
+        if (shift_type - 1 < static_cast<int>(worker.MaxShifts.size())) {
+            if (worker.MaxShifts[shift_type - 1] != "None") {
                 int max_shifts = std::stoi(worker.MaxShifts[shift_type - 1]);
                 if (shift_count > max_shifts) {
                     penalty -= 10 * (shift_count - max_shifts);
@@ -123,25 +135,30 @@ int HardConstraints::evaluateMaxShiftsPerType(const Schedule& schedule) const {
 int HardConstraints::evaluateWorkingTimeConstraints(const Schedule& schedule) const {
     int penalty = 0;
     int num_employees = schedule.getNumEmployees();
-    
     for (int emp = 0; emp < num_employees; emp++) {
-        const Staff& worker = instance.getStaff(emp);
-        int total_minutes = 0;
-        
-        // Calculate total minutes worked
-        for (int shift_type = 1; shift_type <= instance.getNumShiftTypes(); shift_type++) {
-            int shift_count = schedule.getShiftCount(emp, shift_type);
-            const Shift& shift_info = instance.getShift(shift_type - 1);
-            total_minutes += shift_count * shift_info.mins;
-        }
-        
-        // Check min/max total minutes constraints
-        if (total_minutes > worker.MaxTotalMinutes) {
-            penalty -= 10;
-        }
-        if (total_minutes < worker.MinTotalMinutes) {
-            penalty -= 10;
-        }
+        penalty += evaluateWorkingTimeConstraints(schedule, emp);
+    }
+    return penalty;
+}
+
+int HardConstraints::evaluateWorkingTimeConstraints(const Schedule& schedule, int employee_id) const {
+    int penalty = 0;
+    const Staff& worker = instance.getStaff(employee_id);
+    int total_minutes = 0;
+    
+    // Calculate total minutes worked
+    for (int shift_type = 1; shift_type <= instance.getNumShiftTypes(); shift_type++) {
+        int shift_count = schedule.getShiftCount(employee_id, shift_type);
+        const Shift& shift_info = instance.getShift(shift_type - 1);
+        total_minutes += shift_count * shift_info.mins;
+    }
+    
+    // Check min/max total minutes constraints
+    if (total_minutes > worker.MaxTotalMinutes) {
+        penalty -= 10;
+    }
+    if (total_minutes < worker.MinTotalMinutes) {
+        penalty -= 10;
     }
     return penalty;
 }
@@ -149,46 +166,56 @@ int HardConstraints::evaluateWorkingTimeConstraints(const Schedule& schedule) co
 int HardConstraints::evaluateMaxConsecutiveShifts(const Schedule& schedule) const {
     int penalty = 0;
     int num_employees = schedule.getNumEmployees();
-    int horizon = schedule.getHorizonDays();
-    
     for (int emp = 0; emp < num_employees; emp++) {
-        const Staff& worker = instance.getStaff(emp);
-        int consecutive_count = 0;
-        
-        for (int day = 0; day < horizon; day++) {
-            if (schedule.getAssignment(emp, day) != 0) {
-                consecutive_count++;
-                if (consecutive_count > worker.MaxConsecutiveShifts) {
-                    penalty -= 10;
-                }
-            } else {
-                consecutive_count = 0;
+        penalty += evaluateMaxConsecutiveShifts(schedule, emp);
+    }
+    return penalty;
+}
+
+int HardConstraints::evaluateMaxConsecutiveShifts(const Schedule& schedule, int employee_id) const {
+    int penalty = 0;
+    int horizon = schedule.getHorizonDays();
+    const Staff& worker = instance.getStaff(employee_id);
+    int consecutive_count = 0;
+    
+    for (int day = 0; day < horizon; day++) {
+        if (schedule.getAssignment(employee_id, day) != 0) {
+            consecutive_count++;
+            if (consecutive_count > worker.MaxConsecutiveShifts) {
+                penalty -= 10;
             }
+        } else {
+            consecutive_count = 0;
         }
     }
     return penalty;
 }
 
 int HardConstraints::evaluateMinConsecutiveShifts(const Schedule& schedule) const {
+    int penalty = 0;
+    int num_employees = schedule.getNumEmployees();
+    for (int emp = 0; emp < num_employees; emp++) {
+        penalty += evaluateMinConsecutiveShifts(schedule, emp);
+    }
+    return penalty;
+}
+
+int HardConstraints::evaluateMinConsecutiveShifts(const Schedule& schedule, int employee_id) const {
     // This function actually penalizes excessive consecutive days off
     // (the original naming is misleading)
     int penalty = 0;
-    int num_employees = schedule.getNumEmployees();
     int horizon = schedule.getHorizonDays();
+    const Staff& worker = instance.getStaff(employee_id);
+    int consecutive_days_off = 0;
     
-    for (int emp = 0; emp < num_employees; emp++) {
-        const Staff& worker = instance.getStaff(emp);
-        int consecutive_days_off = 0;
-        
-        for (int day = 0; day < horizon; day++) {
-            if (schedule.getAssignment(emp, day) == 0) {
-                consecutive_days_off++;
-                if (consecutive_days_off > worker.MinConsecutiveShifts) {
-                    penalty -= 80;
-                }
-            } else {
-                consecutive_days_off = 0;
+    for (int day = 0; day < horizon; day++) {
+        if (schedule.getAssignment(employee_id, day) == 0) {
+            consecutive_days_off++;
+            if (consecutive_days_off > worker.MinConsecutiveShifts) {
+                penalty -= 80;
             }
+        } else {
+            consecutive_days_off = 0;
         }
     }
     return penalty;
@@ -197,37 +224,42 @@ int HardConstraints::evaluateMinConsecutiveShifts(const Schedule& schedule) cons
 int HardConstraints::evaluateMinConsecutiveDaysOff(const Schedule& schedule) const {
     int penalty = 0;
     int num_employees = schedule.getNumEmployees();
-    int horizon = schedule.getHorizonDays();
-    
     for (int emp = 0; emp < num_employees; emp++) {
-        const Staff& worker = instance.getStaff(emp);
-        bool in_work_period = false;
-        int work_period_length = 0;
-        
-        for (int day = 0; day < horizon; day++) {
-            if (schedule.getAssignment(emp, day) != 0) {
-                if (!in_work_period) {
-                    in_work_period = true;
-                    work_period_length = 1;
-                } else {
-                    work_period_length++;
-                }
+        penalty += evaluateMinConsecutiveDaysOff(schedule, emp);
+    }
+    return penalty;
+}
+
+int HardConstraints::evaluateMinConsecutiveDaysOff(const Schedule& schedule, int employee_id) const {
+    int penalty = 0;
+    int horizon = schedule.getHorizonDays();
+    const Staff& worker = instance.getStaff(employee_id);
+    bool in_work_period = false;
+    int work_period_length = 0;
+    
+    for (int day = 0; day < horizon; day++) {
+        if (schedule.getAssignment(employee_id, day) != 0) {
+            if (!in_work_period) {
+                in_work_period = true;
+                work_period_length = 1;
             } else {
-                if (in_work_period) {
-                    // End of work period, check if it meets minimum
-                    if (work_period_length < worker.MinConsecutiveShifts && work_period_length > 0) {
-                        penalty -= 50;
-                    }
-                    in_work_period = false;
-                    work_period_length = 0;
+                work_period_length++;
+            }
+        } else {
+            if (in_work_period) {
+                // End of work period, check if it meets minimum
+                if (work_period_length < worker.MinConsecutiveShifts && work_period_length > 0) {
+                    penalty -= 50;
                 }
+                in_work_period = false;
+                work_period_length = 0;
             }
         }
-        
-        // Check final work period
-        if (in_work_period && work_period_length < worker.MinConsecutiveShifts && work_period_length > 0) {
-            penalty -= 50;
-        }
+    }
+    
+    // Check final work period
+    if (in_work_period && work_period_length < worker.MinConsecutiveShifts && work_period_length > 0) {
+        penalty -= 50;
     }
     return penalty;
 }
@@ -235,14 +267,19 @@ int HardConstraints::evaluateMinConsecutiveDaysOff(const Schedule& schedule) con
 int HardConstraints::evaluateMaxWeekendsWorked(const Schedule& schedule) const {
     int penalty = 0;
     int num_employees = schedule.getNumEmployees();
-    
     for (int emp = 0; emp < num_employees; emp++) {
-        const Staff& worker = instance.getStaff(emp);
-        int weekend_count = countWeekendsWorked(schedule, emp);
-        
-        if (weekend_count > worker.MaxWeekends) {
-            penalty -= 100 * weekend_count;
-        }
+        penalty += evaluateMaxWeekendsWorked(schedule, emp);
+    }
+    return penalty;
+}
+
+int HardConstraints::evaluateMaxWeekendsWorked(const Schedule& schedule, int employee_id) const {
+    int penalty = 0;
+    const Staff& worker = instance.getStaff(employee_id);
+    int weekend_count = countWeekendsWorked(schedule, employee_id);
+    
+    if (weekend_count > worker.MaxWeekends) {
+        penalty -= 100 * weekend_count;
     }
     return penalty;
 }
@@ -250,26 +287,30 @@ int HardConstraints::evaluateMaxWeekendsWorked(const Schedule& schedule) const {
 int HardConstraints::evaluatePreAssignedDaysOff(const Schedule& schedule) const {
     int penalty = 0;
     int num_employees = schedule.getNumEmployees();
-    int horizon = schedule.getHorizonDays();
-    
-    const auto& days_off_list = instance.getDaysOff();
-    
     for (int emp = 0; emp < num_employees; emp++) {
-        const Staff& worker = instance.getStaff(emp);
-        
-        // Find days off for this employee
-        for (const auto& days_off : days_off_list) {
-            if (days_off.EmployeeID == worker.ID) {
-                for (const auto& day_str : days_off.DayIndexes) {
-                    int day_index = std::stoi(day_str);
-                    if (day_index >= 0 && day_index < horizon) {
-                        if (schedule.getAssignment(emp, day_index) != 0) {
-                            penalty -= 1000; // Very high penalty for violating mandatory days off
-                        }
+        penalty += evaluatePreAssignedDaysOff(schedule, emp);
+    }
+    return penalty;
+}
+
+int HardConstraints::evaluatePreAssignedDaysOff(const Schedule& schedule, int employee_id) const {
+    int penalty = 0;
+    int horizon = schedule.getHorizonDays();
+    const auto& days_off_list = instance.getDaysOff();
+    const Staff& worker = instance.getStaff(employee_id);
+    
+    // Find days off for this employee
+    for (const auto& days_off : days_off_list) {
+        if (days_off.EmployeeID == worker.ID) {
+            for (const auto& day_str : days_off.DayIndexes) {
+                int day_index = std::stoi(day_str);
+                if (day_index >= 0 && day_index < horizon) {
+                    if (schedule.getAssignment(employee_id, day_index) != 0) {
+                        penalty -= 1000; // Very high penalty for violating mandatory days off
                     }
                 }
-                break;
             }
+            break;
         }
     }
     return penalty;
@@ -297,15 +338,16 @@ bool HardConstraints::isFeasible(const Schedule& schedule) const {
 }
 
 int HardConstraints::evaluateEmployee(const Schedule& schedule, int employee) const {
-    // Create a temporary schedule with only this employee's assignments
-    Schedule temp_schedule(1, schedule.getHorizonDays());
-    for (int day = 0; day < schedule.getHorizonDays(); day++) {
-        temp_schedule.setAssignment(0, day, schedule.getAssignment(employee, day));
-    }
-    
-    // Note: This is a simplified version - full implementation would need
-    // to properly handle employee-specific constraints
-    return evaluateAll(temp_schedule);
+    int total_penalty = 0;
+    total_penalty += evaluateShiftRotation(schedule, employee);
+    total_penalty += evaluateMaxShiftsPerType(schedule, employee);
+    total_penalty += evaluateWorkingTimeConstraints(schedule, employee);
+    total_penalty += evaluateMaxConsecutiveShifts(schedule, employee);
+    total_penalty += evaluateMinConsecutiveShifts(schedule, employee);
+    total_penalty += evaluateMinConsecutiveDaysOff(schedule, employee);
+    total_penalty += evaluateMaxWeekendsWorked(schedule, employee);
+    total_penalty += evaluatePreAssignedDaysOff(schedule, employee);
+    return total_penalty;
 }
 
 int HardConstraints::evaluateMove(const Schedule& schedule, int employee, int day, 

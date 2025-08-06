@@ -10,6 +10,7 @@
 #include "src/core/instance.h"
 #include "src/core/data_structures.h"
 #include "src/constraints/constraint_evaluator.h"
+#include "src/metaheuristics/simulated_annealing.h"
 #include <iostream>
 #include <chrono>
 #include <random>
@@ -19,7 +20,7 @@
 #include <ctime>
 
 using namespace std;
-double Acceptance(double score_actual, double score_final, double T, double EulerConstant);
+
 string bestSolutionPrint(const Schedule& schedule, const Instance& instance);
 
 int main(int argc, char **argv) {
@@ -47,179 +48,28 @@ int main(int argc, char **argv) {
     cout << "  Days: " << instance.getHorizonDays() << endl;
     cout << "  Shift types: " << instance.getNumShiftTypes() << endl;
     
-    // Initialize algorithm parameters
-    int Cantidad_empleados = instance.getNumEmployees();
-    int SECTION_HORIZON = instance.getHorizonDays();
-    int turnos_max = instance.getNumShiftTypes();
-    
-    // Create schedules using the new Schedule class
-    Schedule current_schedule(Cantidad_empleados, SECTION_HORIZON);
-    Schedule aux_schedule(Cantidad_empleados, SECTION_HORIZON);
-    Schedule best_schedule(Cantidad_empleados, SECTION_HORIZON);
-    
-    // Initialize the schedule randomly
-    current_schedule.randomize(turnos_max);
-    aux_schedule.copyFrom(current_schedule);
-    
-    // Algorithm parameters
-    double score = 0;
-    double current_score = -1 * pow(10, 5);
-    double best_score = -1 * pow(10, 5);
-    double T = 0;
-    double Reset_T = 0;
-    double EulerConstant = 2.71828;
-    int estancado = 0;
-    int iter_estancado = iterations / 5;
-    int Reset_max = 0;
-    int index = 0;
-    
     time_t start, end;
     
     // Create unified constraint evaluator
     ConstraintEvaluator evaluator(instance);
+
+    // Create and run Simulated Annealing
+    SimulatedAnnealing sa(instance, evaluator, 1000.0, 0.99, iterations, iterations / 5);
     
-    // Calculate initial score using unified evaluator
-    score = evaluator.getHardConstraintViolations(current_schedule);
-    T = abs(score) * 10;
-    Reset_T = T;
-    current_score = score;
-    best_score = score;
-    
-    cout << "Initial score: " << score << endl;
-    cout << "Is initial schedule feasible: " << (evaluator.isFeasible(current_schedule) ? "Yes" : "No") << endl;
-    
-    // Main optimization loop
     time(&start);
-    while (index < iterations) {
-        bool flag = true;
-        
-        for (int i = 0; i < Cantidad_empleados; i++) {
-            if (flag) {
-                for (int j = 0; j < SECTION_HORIZON; j++) {
-                    int turno = aux_schedule.getAssignment(i, j);
-                    if (flag) {
-                        for (int w = 0; w <= turnos_max; w++) {
-                            if (turno != w) {
-                                aux_schedule.setAssignment(i, j, w);
-                            }
-                            
-                            // Calculate new score using unified evaluator
-                            score = evaluator.getHardConstraintViolations(aux_schedule);
-                            
-                            // Simulated Annealing acceptance
-                            unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
-                            default_random_engine e(seed);
-                            uniform_real_distribution<double> distR(0, 1);
-                            double p = distR(e);
-                            
-                            // The acceptance criteria now compares against the best score found so far,
-                            // making the search more aggressive, similar to the original implementation.
-                            double Accept = Acceptance(score, best_score, T, EulerConstant);
-                            
-                            cout << "Score actual: " << score << " Mejor Score: " << best_score 
-                                 << " Estancado: " << estancado << endl;
-                            
-                            if (Accept > p) {
-                                // We accept the new move
-                                current_score = score;
-                                current_schedule.copyFrom(aux_schedule);
-                                flag = false; // Exit inner loops to start a new search from the new state
-
-                                if (current_score > best_score) {
-                                    estancado = 0;
-                                    best_score = current_score;
-                                    best_schedule.copyFrom(current_schedule);
-                                    cout << "New best score: " << best_score << endl;
-                                }
-                                
-                                // Check for optimal solution (feasible)
-                                if (best_score == 0) {
-                                    cout << "Optimal solution found!" << endl;
-                                    index = iterations; // Force exit from main loop
-                                }
-                                break;
-                            } else {
-                                // If not accepted, revert the change in the auxiliary schedule
-                                aux_schedule.setAssignment(i, j, turno);
-                            }
-                        }
-                    } else {
-                        break;
-                    }
-                }
-            } else {
-                break;
-            }
-        }
-        if (best_score == 0) {
-            break;
-        }
-        
-        if (current_score <= best_score) {
-            estancado += 1;
-        }
-        
-        if (estancado > iter_estancado) {
-            cout << estancado << " estancado. Perturbing best solution to escape local optimum." << endl;
-            Reset_max += 1;
-            
-            // Perturb the best known solution instead of a full random reset
-            current_schedule.copyFrom(best_schedule);
-            double perturbation_rate = 0.20; // 20% perturbation
-            int assignments_to_perturb = static_cast<int>(Cantidad_empleados * SECTION_HORIZON * perturbation_rate);
-
-            // Use a more consistent random generator for perturbation
-            unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
-            default_random_engine gen(seed);
-            uniform_int_distribution<> emp_dist(0, Cantidad_empleados - 1);
-            uniform_int_distribution<> day_dist(0, SECTION_HORIZON - 1);
-            uniform_int_distribution<> shift_dist(0, turnos_max);
-
-            for(int k = 0; k < assignments_to_perturb; ++k) {
-                int emp = emp_dist(gen);
-                int day = day_dist(gen);
-                int new_shift = shift_dist(gen);
-                current_schedule.setAssignment(emp, day, new_shift);
-            }
-
-            aux_schedule.copyFrom(current_schedule);
-            current_score = evaluator.getHardConstraintViolations(current_schedule);
-            
-            // Reset temperature and stagnation counter
-            T = Reset_T;
-            estancado = 0;
-        }
-        
-        T = T * (1 - (index + 1.0) / iterations);
-        index++;
-    }
+    
+    Schedule best_schedule = sa.solve();
     
     time(&end);
     double time_taken = double(end - start);
     
     // Final evaluation
-    cout << setprecision(5);
-    cout << current_score << endl;
-    cout << best_score << endl;
+    double best_score = evaluator.getHardConstraintViolations(best_schedule);
+    int fitness = evaluator.getSoftConstraintViolations(best_schedule);
     
-    // Print final schedule
-    for (int i = 0; i < Cantidad_empleados; i++) {
-        for (int j = 0; j < SECTION_HORIZON; j++) {
-            if (j + 1 == SECTION_HORIZON) {
-                cout << best_schedule.getAssignment(i, j) << " " << endl;
-            } else {
-                cout << best_schedule.getAssignment(i, j) << " ";
-            }
-        }
-    }
-    
-    // Final score calculation using unified evaluator
-    score = evaluator.getHardConstraintViolations(best_schedule);
-    
-    int fitness = evaluator.getSoftConstraintPenalties(best_schedule);
-    
-    cout << score << endl;
-    cout << fitness << " Fitness" << endl;
+    cout << "\n=== Final Results ===" << endl;
+    cout << "Best score (hard constraints): " << best_score << endl;
+    cout << "Fitness (soft constraints): " << fitness << endl;
     
     // Show final constraint analysis
     cout << "\n=== Final Constraint Analysis ===" << endl;
@@ -252,14 +102,6 @@ int main(int argc, char **argv) {
 }
 
 // All constraint evaluation is now handled by the unified ConstraintEvaluator class
-
-double Acceptance(double score_actual, double score_final, double T, double EulerConstant) {
-    if (score_actual > score_final) {
-        return 1.0;
-    }
-    if (T == 0) return 0;
-    return exp((score_actual - score_final) / T);
-}
 
 string bestSolutionPrint(const Schedule& schedule, const Instance& instance) {
     string line;

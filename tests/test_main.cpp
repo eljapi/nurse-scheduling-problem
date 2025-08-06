@@ -1,14 +1,20 @@
 #include "test_runner.h"
-#include <iostream>
+#include "test_hard_constraints.h"
+#include "test_soft_constraints.h"
+#include "test_solution_validator.cpp"
 
-int main(int argc, char* argv[]) {
+void registerHardConstraintTests(TestRunner& runner);
+void registerSoftConstraintTests(TestRunner& runner);
+void registerSolutionValidatorTests(TestRunner& runner);
+
+int main() {
     TestRunner runner;
     
-    if (argc > 1 && std::string(argv[1]) == "--all") {
-        runner.runAllTests();
-    } else {
-        runner.runBasicTests();
-    }
+    registerHardConstraintTests(runner);
+    registerSoftConstraintTests(runner);
+    registerSolutionValidatorTests(runner);
     
-    return runner.allTestsPassed() ? 0 : 1;
+    runner.runAllTests();
+    
+    return 0;
 }

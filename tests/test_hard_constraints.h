@@ -1,6 +1,7 @@
 #ifndef TEST_HARD_CONSTRAINTS_H
 #define TEST_HARD_CONSTRAINTS_H
 
+#include "test_runner.h"
 #include <string>
 #include <vector>
 
@@ -36,5 +37,7 @@ public:
     void printResults();
     bool allTestsPassed() const;
 };
+
+void registerHardConstraintTests(TestRunner& runner);
 
 #endif // TEST_HARD_CONSTRAINTS_H

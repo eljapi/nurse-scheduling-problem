@@ -289,3 +289,9 @@ void TestHardConstraints::printResults() {
 bool TestHardConstraints::allTestsPassed() const {
     return tests_failed == 0;
 }
+
+void registerHardConstraintTests(TestRunner& runner) {
+    TestHardConstraints tests;
+    tests.runAllTests();
+    runner.logTest("Hard Constraints Suite", tests.allTestsPassed());
+}

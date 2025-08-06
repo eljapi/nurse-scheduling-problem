@@ -37,6 +37,7 @@ public:
      * @return Positive score for satisfied requests
      */
     int evaluateShiftOnRequests(const Schedule& schedule) const;
+    int evaluateShiftOnRequests(const Schedule& schedule, int employee_id) const;
     
     /**
      * Evaluates shift-off requests (employees want to avoid specific shifts)
@@ -45,6 +46,7 @@ public:
      * @return Negative score for violated off-requests
      */
     int evaluateShiftOffRequests(const Schedule& schedule) const;
+    int evaluateShiftOffRequests(const Schedule& schedule, int employee_id) const;
     
     /**
      * Evaluates coverage requirements for all shifts and days

@@ -50,48 +50,56 @@ public:
      * Ensures proper rest between incompatible shift types
      */
     int evaluateShiftRotation(const Schedule& schedule) const;
+    int evaluateShiftRotation(const Schedule& schedule, int employee_id) const;
     
     /**
      * Constraint (3): Maximum shifts of type t for employee i
      * Limits the number of each shift type per employee
      */
     int evaluateMaxShiftsPerType(const Schedule& schedule) const;
+    int evaluateMaxShiftsPerType(const Schedule& schedule, int employee_id) const;
     
     /**
      * Constraint (4): Min/max minutes worked
      * Ensures employees work within their time limits
      */
     int evaluateWorkingTimeConstraints(const Schedule& schedule) const;
+    int evaluateWorkingTimeConstraints(const Schedule& schedule, int employee_id) const;
     
     /**
      * Constraint (5): Maximum consecutive shifts
      * Limits consecutive working days
      */
     int evaluateMaxConsecutiveShifts(const Schedule& schedule) const;
+    int evaluateMaxConsecutiveShifts(const Schedule& schedule, int employee_id) const;
     
     /**
      * Constraint (6): Minimum consecutive shifts
      * Ensures minimum consecutive working periods
      */
     int evaluateMinConsecutiveShifts(const Schedule& schedule) const;
+    int evaluateMinConsecutiveShifts(const Schedule& schedule, int employee_id) const;
     
     /**
      * Constraint (7): Minimum consecutive days off
      * Ensures adequate rest periods
      */
     int evaluateMinConsecutiveDaysOff(const Schedule& schedule) const;
+    int evaluateMinConsecutiveDaysOff(const Schedule& schedule, int employee_id) const;
     
     /**
      * Constraint (9): Maximum weekends worked
      * Limits weekend work assignments
      */
     int evaluateMaxWeekendsWorked(const Schedule& schedule) const;
+    int evaluateMaxWeekendsWorked(const Schedule& schedule, int employee_id) const;
     
     /**
      * Constraint (10): Pre-assigned days off
      * Enforces mandatory days off
      */
     int evaluatePreAssignedDaysOff(const Schedule& schedule) const;
+    int evaluatePreAssignedDaysOff(const Schedule& schedule, int employee_id) const;
     
     // Aggregate evaluation methods
     

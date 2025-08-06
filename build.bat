@@ -17,6 +17,7 @@ g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -c src/core/instance.cpp -o build/co
 echo Compiling constraints modules...
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -Isrc/constraints -c src/constraints/hard_constraints.cpp -o build/constraints/hard_constraints.o
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -Isrc/constraints -c src/constraints/soft_constraints.cpp -o build/constraints/soft_constraints.o
+g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -Isrc/constraints -c src/constraints/constraint_evaluator.cpp -o build/constraints/constraint_evaluator.o
 
 echo Compiling tests...
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -Isrc/constraints -c tests/test_runner.cpp -o build/tests/test_runner.o
@@ -31,7 +32,7 @@ echo Compiling optimized main...
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -o bin/nsp_optimized.exe main_optimized.cpp build/core/data_structures.o build/core/instance_parser.o build/core/instance.o
 
 echo Compiling refactored main...
-g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -Isrc/constraints -o bin/nsp_refactored.exe main_refactored.cpp build/core/data_structures.o build/core/instance_parser.o build/core/instance.o build/constraints/hard_constraints.o build/constraints/soft_constraints.o
+g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -Isrc/constraints -o bin/nsp_refactored.exe main_refactored.cpp build/core/data_structures.o build/core/instance_parser.o build/core/instance.o build/constraints/hard_constraints.o build/constraints/soft_constraints.o build/constraints/constraint_evaluator.o
 
 echo Compiling original for comparison...
 g++ -std=c++17 -Wall -Wextra -O2 -o bin/nsp_original.exe main.cpp

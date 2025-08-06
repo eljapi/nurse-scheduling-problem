@@ -112,15 +112,18 @@ int main(int argc, char **argv) {
                             uniform_real_distribution<double> distR(0, 1);
                             double p = distR(e);
                             
-                            double Accept = Acceptance(score, current_score, T, EulerConstant);
+                            // The acceptance criteria now compares against the best score found so far,
+                            // making the search more aggressive, similar to the original implementation.
+                            double Accept = Acceptance(score, best_score, T, EulerConstant);
                             
                             cout << "Score actual: " << score << " Mejor Score: " << best_score 
                                  << " Estancado: " << estancado << endl;
                             
                             if (Accept > p) {
+                                // We accept the new move
                                 current_score = score;
                                 current_schedule.copyFrom(aux_schedule);
-                                flag = false;
+                                flag = false; // Exit inner loops to start a new search from the new state
 
                                 if (current_score > best_score) {
                                     estancado = 0;
@@ -136,6 +139,7 @@ int main(int argc, char **argv) {
                                 }
                                 break;
                             } else {
+                                // If not accepted, revert the change in the auxiliary schedule
                                 aux_schedule.setAssignment(i, j, turno);
                             }
                         }
@@ -156,15 +160,34 @@ int main(int argc, char **argv) {
         }
         
         if (estancado > iter_estancado) {
-            cout << estancado << " estancado" << endl;
+            cout << estancado << " estancado. Perturbing best solution to escape local optimum." << endl;
             Reset_max += 1;
             
-            T = Reset_T;
-            estancado = 0;
-            
-            current_schedule.randomize(turnos_max);
+            // Perturb the best known solution instead of a full random reset
+            current_schedule.copyFrom(best_schedule);
+            double perturbation_rate = 0.20; // 20% perturbation
+            int assignments_to_perturb = static_cast<int>(Cantidad_empleados * SECTION_HORIZON * perturbation_rate);
+
+            // Use a more consistent random generator for perturbation
+            unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
+            default_random_engine gen(seed);
+            uniform_int_distribution<> emp_dist(0, Cantidad_empleados - 1);
+            uniform_int_distribution<> day_dist(0, SECTION_HORIZON - 1);
+            uniform_int_distribution<> shift_dist(0, turnos_max);
+
+            for(int k = 0; k < assignments_to_perturb; ++k) {
+                int emp = emp_dist(gen);
+                int day = day_dist(gen);
+                int new_shift = shift_dist(gen);
+                current_schedule.setAssignment(emp, day, new_shift);
+            }
+
             aux_schedule.copyFrom(current_schedule);
             current_score = evaluator.getHardConstraintViolations(current_schedule);
+            
+            // Reset temperature and stagnation counter
+            T = Reset_T;
+            estancado = 0;
         }
         
         T = T * (1 - (index + 1.0) / iterations);

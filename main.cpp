@@ -780,18 +780,17 @@ int main(int argc, char **argv)
 
         string line;
         while(getline(fileStream,line)){
-            line.append("\n");
             if(line[0] != '#'){
-                if(line[1] != '\n' && !copiar){    
+                if(line.length() > 1 && !copiar){    
                     for(int i = flags; i<7 ; i++){
-                        if(line.compare(sections[i]) == 2){
+                        if(line.compare(sections[i]) == 0){
                         flags = i;
                         copiar = true; //me situa en el .txt
                             break; 
                         } 
                     }
 
-                }else if(line[1] != '\n' && copiar){
+                }else if(line.length() > 1 && copiar){
                     switch (flags)
                     {
                     case 0:
@@ -855,7 +854,7 @@ int main(int argc, char **argv)
                     }
                     
 
-                }else if(line[1] == '\n' && copiar){
+                }else if(line.length() <= 1 && copiar){
                     copiar = false;
                 }
                 

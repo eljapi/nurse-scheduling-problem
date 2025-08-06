@@ -1,0 +1,3 @@
+Suma de penalizaciones : 0
+Factible ? : Si
+Timepo total de ejecucion: 0.000000[s]

@@ -22,6 +22,9 @@ public:
     bool runInstanceTest(const std::string& instance_file);
     bool runParsingTest(const std::string& instance_file);
     bool runScheduleTest();
+    bool runAdvancedScheduleTests();
+    bool runHardConstraintsTests();
+    bool runSoftConstraintsTests();
     
     // Test suite runners
     void runAllTests();

@@ -11,35 +11,51 @@
   - _Requirements: 1.3, 5.1, 5.4_
 
 - [ ] 2. Extract and modularize core data structures
-  - [ ] 2.1 Create Instance class with optimized data loading
+  - [x] 2.1 Create Instance class with optimized data loading
+
+
+
     - Review current parsing functions (addShift, addStaff, addDaysOff, etc.) in main.cpp
     - Extract instance parsing logic from main.cpp into InstanceParser class
     - Implement Instance class to hold all problem data with const getters
     - Write unit tests for instance loading and data access
     - _Requirements: 1.1, 1.3, 2.1_
 
-  - [ ] 2.2 Create Schedule class for solution representation
+  - [x] 2.2 Create Schedule class for solution representation
+
+
+
+
+
     - Review current matrix operations (MATRIX, aux_matrix, copyMatrix) in main.cpp
     - Implement Schedule class to replace raw 2D arrays with proper encapsulation
     - Add methods for assignment manipulation and copying
     - Create unit tests for schedule operations
     - _Requirements: 1.1, 1.3, 2.1_
 
-  - [ ] 2.3 Refactor main.cpp to use new data structures
+  - [x] 2.3 Refactor main.cpp to use new data structures
+
+
+
     - Update main.cpp to use Instance and Schedule classes
     - Ensure Instance1 still runs correctly with new structure
     - Verify output matches original implementation
     - _Requirements: 1.1, 1.2, 1.4_
 
 - [ ] 3. Extract and optimize constraint evaluation system
-  - [ ] 3.1 Create HardConstraints class
+  - [x] 3.1 Create HardConstraints class
+
+
+
     - Review current hard constraint functions (sumOfShift, ShiftTimesSum, maxConsecutiveShifts, etc.)
     - Extract all hard constraint functions into HardConstraints class
     - Implement methods for each constraint type (max shifts, consecutive work, etc.)
     - Write unit tests for individual constraint evaluation
     - _Requirements: 1.3, 2.1, 5.2_
 
-  - [ ] 3.2 Create SoftConstraints class  
+  - [x] 3.2 Create SoftConstraints class  
+
+
     - Review current soft constraint functions (ShiftOnRequest, ShiftOffRequest, SectionCover)
     - Extract soft constraint functions into SoftConstraints class
     - Implement penalty calculation methods for requests and coverage
@@ -47,6 +63,10 @@
     - _Requirements: 1.3, 2.1, 5.2_
 
   - [ ] 3.3 Implement unified ConstraintEvaluator
+
+
+
+
     - Create ConstraintEvaluator class that combines hard and soft constraints
     - Replace scattered constraint calls in main loop with unified evaluation
     - Verify Instance1 produces same results with new evaluator

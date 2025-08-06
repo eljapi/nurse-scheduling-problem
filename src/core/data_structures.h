@@ -84,6 +84,7 @@ private:
     std::vector<std::vector<int>> assignments;  // [employee][day] = shift_id
     int num_employees;
     int horizon_days;
+    int num_shift_types;
     
     // Cached data for performance
     mutable bool cache_valid;
@@ -96,7 +97,7 @@ private:
     void ensureCacheValid() const;
     
 public:
-    Schedule(int employees, int days);
+    Schedule(int employees, int days, int shift_types);
     Schedule(const Schedule& other);
     Schedule& operator=(const Schedule& other);
     
@@ -107,6 +108,7 @@ public:
     // Getters
     int getNumEmployees() const { return num_employees; }
     int getHorizonDays() const { return horizon_days; }
+    int getNumShiftTypes() const { return num_shift_types; }
     
     // Schedule manipulation
     void randomize(int max_shifts);

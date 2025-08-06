@@ -30,7 +30,7 @@ bool TestSoftConstraints::testShiftOnRequests() {
     }
     
     SoftConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Test empty schedule (should have low score)
     schedule.clear();
@@ -62,7 +62,7 @@ bool TestSoftConstraints::testShiftOffRequests() {
     }
     
     SoftConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Test empty schedule (should have no violations)
     schedule.clear();
@@ -94,7 +94,7 @@ bool TestSoftConstraints::testCoverageRequirements() {
     }
     
     SoftConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Test empty schedule (should have under-staffing penalties)
     schedule.clear();
@@ -126,7 +126,7 @@ bool TestSoftConstraints::testAggregateEvaluation() {
     }
     
     SoftConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Test that aggregate equals sum of individual evaluations
     schedule.clear();
@@ -163,7 +163,7 @@ bool TestSoftConstraints::testMoveEvaluation() {
     }
     
     SoftConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Create a base schedule
     schedule.clear();
@@ -198,7 +198,7 @@ bool TestSoftConstraints::testEmployeeEvaluation() {
     }
     
     SoftConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Test employee-specific evaluation
     schedule.clear();
@@ -231,7 +231,7 @@ bool TestSoftConstraints::testDetailedAnalysis() {
     }
     
     SoftConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Test detailed scores
     schedule.clear();
@@ -264,7 +264,7 @@ bool TestSoftConstraints::testSatisfactionRates() {
     }
     
     SoftConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Test satisfaction rates
     schedule.clear();
@@ -305,7 +305,7 @@ bool TestSoftConstraints::testRequestAnalysis() {
     }
     
     SoftConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Test request counting
     schedule.clear();

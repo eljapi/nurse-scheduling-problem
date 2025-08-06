@@ -12,7 +12,7 @@
 Schedule parseSolution(const std::string& solution_file, const Instance& instance) {
     int num_employees = instance.getNumEmployees();
     int horizon = instance.getHorizonDays();
-    Schedule schedule(num_employees, horizon);
+    Schedule schedule(num_employees, horizon, instance.getNumShiftTypes());
 
     std::ifstream file(solution_file);
     std::string line;

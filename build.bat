@@ -6,6 +6,7 @@ if not exist build mkdir build
 if not exist build\core mkdir build\core
 if not exist build\constraints mkdir build\constraints
 if not exist build\tests mkdir build\tests
+if not exist build\utils mkdir build\utils
 if not exist bin mkdir bin
 if not exist src\constraints mkdir src\constraints
 
@@ -36,8 +37,11 @@ g++ -std=c++17 -Wall -Wextra -O2 -o bin/test_runner.exe build/core/data_structur
 echo Compiling optimized main...
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -o bin/nsp_optimized.exe main_optimized.cpp build/core/data_structures.o build/core/instance_parser.o build/core/instance.o
 
+echo Compiling utils modules...
+g++ -std=c++17 -Wall -Wextra -O2 -Isrc -c src/utils/random.cpp -o build/utils/random.o
+
 echo Compiling refactored main...
-g++ -std=c++17 -Wall -Wextra -O2 -Isrc -o bin/nsp_refactored.exe main_refactored.cpp build/core/data_structures.o build/core/instance_parser.o build/core/instance.o build/constraints/hard_constraints.o build/constraints/soft_constraints.o build/constraints/constraint_evaluator.o build/neighborhood.o build/simulated_annealing.o build/incremental_evaluator.o
+g++ -std=c++17 -Wall -Wextra -O2 -Isrc -o bin/nsp_refactored.exe main_refactored.cpp build/core/data_structures.o build/core/instance_parser.o build/core/instance.o build/constraints/hard_constraints.o build/constraints/soft_constraints.o build/constraints/constraint_evaluator.o build/neighborhood.o build/simulated_annealing.o build/incremental_evaluator.o build/utils/random.o
 
 echo Compiling original for comparison...
 g++ -std=c++17 -Wall -Wextra -O2 -o bin/nsp_original.exe main.cpp

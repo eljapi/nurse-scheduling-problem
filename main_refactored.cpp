@@ -11,6 +11,7 @@
 #include "src/core/data_structures.h"
 #include "src/constraints/constraint_evaluator.h"
 #include "src/metaheuristics/simulated_annealing.h"
+#include "src/utils/random.h"
 #include <iostream>
 #include <chrono>
 #include <random>
@@ -24,13 +25,17 @@ using namespace std;
 string bestSolutionPrint(const Schedule& schedule, const Instance& instance);
 
 int main(int argc, char **argv) {
-    if (argc < 3) {
-        cerr << "Usage: " << argv[0] << " <instance_file> <iterations>" << endl;
+    Random::initialize();
+    if (argc < 6) {
+        cerr << "Usage: " << argv[0] << " <instance_file> <iterations> <initial_temp> <cooling_rate> <stagnation_limit>" << endl;
         return 1;
     }
     
     string instance_file = "nsp_instancias/instances1_24/" + string(argv[1]);
     int iterations = stoi(argv[2]);
+    double initial_temp = stod(argv[3]);
+    double cooling_rate = stod(argv[4]);
+    int stagnation_limit = stoi(argv[5]);
     
     cout << "NSP Refactored Version (using Instance and Schedule classes)" << endl;
     cout << "Instance: " << instance_file << endl;
@@ -54,13 +59,25 @@ int main(int argc, char **argv) {
     ConstraintEvaluator evaluator(instance);
 
     // Create and run Simulated Annealing
-    SimulatedAnnealing sa(instance, evaluator, 1000.0, 0.99, iterations, iterations / 5);
+    SimulatedAnnealing sa(instance, evaluator, initial_temp, cooling_rate, iterations, stagnation_limit);
     
+    cout << "\n=== PHASE 1: Searching for a feasible solution... ===" << endl;
     time(&start);
-    
-    Schedule best_schedule = sa.solve();
-    
+    Schedule feasible_schedule = sa.solve(SolveMode::Feasibility);
     time(&end);
+    
+    double hard_score = evaluator.getHardConstraintViolations(feasible_schedule);
+    Schedule best_schedule = feasible_schedule;
+
+    if (hard_score < 0) {
+        cout << "\nCould not find a feasible solution in Phase 1." << endl;
+    } else {
+        cout << "\nFeasible solution found! Starting PHASE 2: Optimization." << endl;
+        SimulatedAnnealing sa_optimizer(instance, evaluator, initial_temp / 10, cooling_rate, iterations, stagnation_limit);
+        
+        best_schedule = sa_optimizer.solve(SolveMode::Optimization);
+    }
+    
     double time_taken = double(end - start);
     
     // Final evaluation
@@ -74,6 +91,14 @@ int main(int argc, char **argv) {
     // Show final constraint analysis
     cout << "\n=== Final Constraint Analysis ===" << endl;
     cout << "Final schedule feasible: " << (evaluator.isFeasible(best_schedule) ? "Yes" : "No") << endl;
+
+    std::map<std::string, int> violations = evaluator.getHardConstraintViolationsMap(best_schedule);
+    cout << "\nConstraint Violation Breakdown:" << endl;
+    for (const auto& pair : violations) {
+        if (pair.second < 0) {
+            cout << "  - " << pair.first << ": " << pair.second << endl;
+        }
+    }
     
     string OutPutLine = bestSolutionPrint(best_schedule, instance);
     

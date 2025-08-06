@@ -25,7 +25,7 @@ int main() {
     HardConstraints constraints(instance);
     
     // Create a test schedule
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     std::cout << "\n--- Testing Empty Schedule ---" << std::endl;
     schedule.clear();

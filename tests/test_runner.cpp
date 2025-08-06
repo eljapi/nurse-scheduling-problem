@@ -65,7 +65,7 @@ bool TestRunner::runParsingTest(const std::string& instance_file) {
 
 bool TestRunner::runScheduleTest() {
     // Test Schedule class basic functionality
-    Schedule schedule(3, 7);  // 3 employees, 7 days
+    Schedule schedule(3, 7, 3);  // 3 employees, 7 days
     
     // Test assignment and retrieval
     schedule.setAssignment(0, 0, 1);
@@ -94,7 +94,7 @@ bool TestRunner::runAdvancedScheduleTests() {
     bool all_tests_passed = true;
     
     // Test 1: Constructor and basic properties
-    Schedule schedule(5, 7);
+    Schedule schedule(5, 7, 3);
     bool test1 = (schedule.getNumEmployees() == 5 && schedule.getHorizonDays() == 7);
     logTest("Schedule Constructor", test1, test1 ? "" : "Wrong dimensions");
     all_tests_passed &= test1;
@@ -116,7 +116,7 @@ bool TestRunner::runAdvancedScheduleTests() {
     
     // Test 3: Copy constructor and assignment operator
     Schedule copy_constructed(schedule);
-    Schedule copy_assigned(2, 3);
+    Schedule copy_assigned(2, 3, 3);
     copy_assigned = schedule;
     
     bool test3 = (copy_constructed == schedule && copy_assigned == schedule);
@@ -124,7 +124,7 @@ bool TestRunner::runAdvancedScheduleTests() {
     all_tests_passed &= test3;
     
     // Test 4: Randomization
-    Schedule random_schedule(3, 5);
+    Schedule random_schedule(3, 5, 3);
     random_schedule.randomize(3);
     
     // Check that randomization produced some non-zero values
@@ -141,7 +141,7 @@ bool TestRunner::runAdvancedScheduleTests() {
     all_tests_passed &= has_assignments;
     
     // Test 5: Swap operations
-    Schedule swap_schedule(3, 3);
+    Schedule swap_schedule(3, 3, 3);
     swap_schedule.setAssignment(0, 0, 1);
     swap_schedule.setAssignment(1, 1, 2);
     swap_schedule.swapAssignments(0, 0, 1, 1);
@@ -152,7 +152,7 @@ bool TestRunner::runAdvancedScheduleTests() {
     all_tests_passed &= test5;
     
     // Test 6: Shift count analysis
-    Schedule analysis_schedule(2, 5);
+    Schedule analysis_schedule(2, 5, 3);
     analysis_schedule.setAssignment(0, 0, 1);
     analysis_schedule.setAssignment(0, 1, 1);
     analysis_schedule.setAssignment(0, 2, 2);
@@ -168,7 +168,7 @@ bool TestRunner::runAdvancedScheduleTests() {
     all_tests_passed &= test6;
     
     // Test 7: Consecutive shifts analysis
-    Schedule consecutive_schedule(2, 6);
+    Schedule consecutive_schedule(2, 6, 3);
     consecutive_schedule.setAssignment(0, 0, 1);
     consecutive_schedule.setAssignment(0, 1, 2);
     consecutive_schedule.setAssignment(0, 2, 1);
@@ -183,7 +183,7 @@ bool TestRunner::runAdvancedScheduleTests() {
     all_tests_passed &= test7;
     
     // Test 8: Coverage analysis
-    Schedule coverage_schedule(4, 3);
+    Schedule coverage_schedule(4, 3, 3);
     coverage_schedule.setAssignment(0, 0, 1);  // Day 0: 2 employees work shift 1
     coverage_schedule.setAssignment(1, 0, 1);
     coverage_schedule.setAssignment(2, 0, 2);  // Day 0: 1 employee works shift 2
@@ -198,7 +198,7 @@ bool TestRunner::runAdvancedScheduleTests() {
     all_tests_passed &= test8;
     
     // Test 9: Utilization rate
-    Schedule util_schedule(2, 4);
+    Schedule util_schedule(2, 4, 3);
     util_schedule.setAssignment(0, 0, 1);
     util_schedule.setAssignment(0, 1, 1);
     util_schedule.setAssignment(1, 0, 2);
@@ -211,7 +211,7 @@ bool TestRunner::runAdvancedScheduleTests() {
     all_tests_passed &= test9;
     
     // Test 10: Raw matrix compatibility
-    Schedule matrix_schedule(2, 3);
+    Schedule matrix_schedule(2, 3, 3);
     matrix_schedule.setAssignment(0, 0, 1);
     matrix_schedule.setAssignment(1, 2, 2);
     
@@ -229,14 +229,14 @@ bool TestRunner::runAdvancedScheduleTests() {
     all_tests_passed &= test10;
     
     // Test 11: Serialization
-    Schedule serial_schedule(2, 3);
+    Schedule serial_schedule(2, 3, 3);
     serial_schedule.setAssignment(0, 0, 1);
     serial_schedule.setAssignment(0, 1, 2);
     serial_schedule.setAssignment(1, 2, 3);
     
     std::string compact_str = serial_schedule.toCompactString();
     
-    Schedule deserialized_schedule(2, 3);
+    Schedule deserialized_schedule(2, 3, 3);
     deserialized_schedule.fromString(compact_str);
     
     bool test11 = (deserialized_schedule == serial_schedule);
@@ -253,7 +253,7 @@ bool TestRunner::runAdvancedScheduleTests() {
     all_tests_passed &= test12;
     
     // Test 13: Clear operation
-    Schedule clear_schedule(2, 3);
+    Schedule clear_schedule(2, 3, 3);
     clear_schedule.setAssignment(0, 0, 1);
     clear_schedule.setAssignment(1, 1, 2);
     clear_schedule.clear();

@@ -54,3 +54,11 @@ double ConstraintEvaluator::getEmployeeSoftConstraintViolations(const Schedule& 
     // Coverage requirements are not employee-specific
     return score;
 }
+
+std::vector<std::pair<int, int>> ConstraintEvaluator::getViolatingAssignments(const Schedule& schedule) {
+    return hard_constraints.getViolatingAssignments(schedule);
+}
+
+std::map<std::string, int> ConstraintEvaluator::getHardConstraintViolationsMap(const Schedule& schedule) {
+    return hard_constraints.getConstraintViolations(schedule);
+}

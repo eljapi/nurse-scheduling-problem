@@ -160,6 +160,14 @@ public:
      * @return Map of constraint names to satisfaction rates
      */
     std::map<std::string, double> getConstraintStatistics(const Schedule& schedule) const;
+
+    /**
+     * Gets a list of assignments that violate hard constraints
+     * @param schedule The schedule to analyze
+     * @return Vector of pairs (employee, day) of violating assignments
+     */
+    std::vector<std::pair<int, int>> getViolatingAssignments(const Schedule& schedule) const;
+    std::map<std::string, int> getConstraintViolations(const Schedule& schedule) const;
 };
 
 #endif // HARD_CONSTRAINTS_H

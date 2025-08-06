@@ -31,7 +31,7 @@ bool TestHardConstraints::testMaxShiftsPerType() {
     }
     
     HardConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Test valid schedule (should have penalty 0)
     schedule.clear();
@@ -62,7 +62,7 @@ bool TestHardConstraints::testWorkingTimeConstraints() {
     }
     
     HardConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Test empty schedule (should violate minimum time)
     schedule.clear();
@@ -94,7 +94,7 @@ bool TestHardConstraints::testMaxConsecutiveShifts() {
     }
     
     HardConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Test valid schedule with breaks
     schedule.clear();
@@ -128,7 +128,7 @@ bool TestHardConstraints::testPreAssignedDaysOff() {
     }
     
     HardConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Test schedule that respects days off
     schedule.clear();
@@ -177,7 +177,7 @@ bool TestHardConstraints::testShiftRotation() {
     }
     
     HardConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Test valid rotation (days off between shifts)
     schedule.clear();
@@ -202,7 +202,7 @@ bool TestHardConstraints::testAggregateEvaluation() {
     }
     
     HardConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Test empty schedule
     schedule.clear();
@@ -241,7 +241,7 @@ bool TestHardConstraints::testMoveEvaluation() {
     }
     
     HardConstraints constraints(instance);
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     // Create a base schedule
     schedule.clear();

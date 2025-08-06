@@ -29,9 +29,9 @@ int main() {
     SoftConstraints constraints(instance);
     
     // Create test schedules
-    Schedule empty_schedule(instance.getNumEmployees(), instance.getHorizonDays());
-    Schedule partial_schedule(instance.getNumEmployees(), instance.getHorizonDays());
-    Schedule full_schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule empty_schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
+    Schedule partial_schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
+    Schedule full_schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     
     std::cout << "\n--- Testing Empty Schedule ---" << std::endl;
     empty_schedule.clear();

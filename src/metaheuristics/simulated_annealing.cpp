@@ -2,30 +2,31 @@
 #include "neighborhood.h"
 #include "../core/data_structures.h"
 #include "../constraints/incremental_evaluator.h"
+#include "../utils/random.h"
 #include <iostream>
 #include <chrono>
-#include <random>
 #include <cmath>
 
 SimulatedAnnealing::SimulatedAnnealing(const Instance& instance, ConstraintEvaluator& evaluator,
                                        double initial_temp, double cooling, int max_iter, int stagnation)
     : instance(instance),
       evaluator(evaluator),
-      incremental_evaluator(evaluator, Schedule(instance.getNumEmployees(), instance.getHorizonDays())),
-      neighborhood(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes()),
+      incremental_evaluator(evaluator, Schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes())),
+      neighborhood(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes(), evaluator),
       initial_temperature(initial_temp),
       cooling_rate(cooling),
       max_iterations(max_iter),
       stagnation_limit(stagnation) {}
 
-Schedule SimulatedAnnealing::solve() {
-    Schedule current_schedule(instance.getNumEmployees(), instance.getHorizonDays());
+Schedule SimulatedAnnealing::solve(SolveMode mode) {
+    Schedule current_schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     current_schedule.randomize(instance.getNumShiftTypes());
 
-    new (&incremental_evaluator) IncrementalEvaluator(evaluator, current_schedule);
+    incremental_evaluator.reset(current_schedule);
 
     Schedule best_schedule = current_schedule;
-    double best_score = incremental_evaluator.getTotalScore();
+    double best_hard_score = incremental_evaluator.getHardScore();
+    double best_soft_score = incremental_evaluator.getSoftScore();
 
     double temperature = initial_temperature;
     int stagnated = 0;
@@ -34,17 +35,17 @@ Schedule SimulatedAnnealing::solve() {
         Move move = neighborhood.getRandomMove(current_schedule);
         
         double delta = incremental_evaluator.getDelta(move);
-        double current_score = incremental_evaluator.getTotalScore();
-        double new_score = current_score + delta;
 
-        if (acceptance(current_score, new_score, temperature) > ((double)rand() / RAND_MAX)) {
+        if (acceptance(delta, temperature) > Random::getDouble(0.0, 1.0)) {
             incremental_evaluator.applyMove(move);
-            current_schedule.setAssignment(move.employee_id, move.day, move.new_shift);
+            current_schedule = incremental_evaluator.getCurrentSchedule();
         }
 
-        if (incremental_evaluator.getTotalScore() > best_score) {
+        if (incremental_evaluator.getHardScore() > best_hard_score || 
+            (incremental_evaluator.getHardScore() == best_hard_score && incremental_evaluator.getSoftScore() > best_soft_score)) {
             best_schedule = current_schedule;
-            best_score = incremental_evaluator.getTotalScore();
+            best_hard_score = incremental_evaluator.getHardScore();
+            best_soft_score = incremental_evaluator.getSoftScore();
             stagnated = 0;
         } else {
             stagnated++;
@@ -53,7 +54,7 @@ Schedule SimulatedAnnealing::solve() {
         if (stagnated > stagnation_limit) {
             current_schedule = best_schedule;
             neighborhood.perturb(current_schedule, 0.20); // 20% perturbation
-            new (&incremental_evaluator) IncrementalEvaluator(evaluator, current_schedule);
+            incremental_evaluator.reset(current_schedule);
             temperature = initial_temperature;
             stagnated = 0;
         }
@@ -62,26 +63,28 @@ Schedule SimulatedAnnealing::solve() {
         
         if (i % 100 == 0) {
             std::cout << "Iteration " << i << ": "
-                      << "Best Score = " << best_score
-                      << ", Current Score = " << incremental_evaluator.getTotalScore()
+                      << "Best Hard Score = " << best_hard_score
+                      << ", Best Soft Score = " << best_soft_score
+                      << ", Current Hard Score = " << incremental_evaluator.getHardScore()
+                      << ", Current Soft Score = " << incremental_evaluator.getSoftScore()
                       << ", Temperature = " << temperature << std::endl;
         }
 
-        if (best_score == 0) {
-            std::cout << "Optimal solution found!" << std::endl;
-            break;
+        if (mode == SolveMode::Feasibility && best_hard_score == 0) {
+            std::cout << "Feasible solution found!" << std::endl;
+            return best_schedule;
         }
     }
 
     return best_schedule;
 }
 
-double SimulatedAnnealing::acceptance(double current_score, double new_score, double temperature) {
-    if (new_score > current_score) {
+double SimulatedAnnealing::acceptance(double delta, double temperature) {
+    if (delta > 0) {
         return 1.0;
     }
     if (temperature == 0) {
         return 0.0;
     }
-    return exp((new_score - current_score) / temperature);
+    return exp(delta / temperature);
 }

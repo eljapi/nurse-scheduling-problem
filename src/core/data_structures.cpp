@@ -6,8 +6,8 @@
 #include <sstream>
 #include <iomanip>
 
-Schedule::Schedule(int employees, int days) 
-    : num_employees(employees), horizon_days(days), cache_valid(false) {
+Schedule::Schedule(int employees, int days, int shift_types) 
+    : num_employees(employees), horizon_days(days), num_shift_types(shift_types), cache_valid(false) {
     assignments.resize(employees);
     for (int i = 0; i < employees; i++) {
         assignments[i].resize(days, 0);  // Initialize with 0 (no shift)
@@ -20,7 +20,7 @@ Schedule::Schedule(int employees, int days)
 
 Schedule::Schedule(const Schedule& other) 
     : num_employees(other.num_employees), horizon_days(other.horizon_days), 
-      cache_valid(other.cache_valid) {
+      num_shift_types(other.num_shift_types), cache_valid(other.cache_valid) {
     assignments = other.assignments;
     shift_counts = other.shift_counts;
     total_minutes = other.total_minutes;
@@ -30,6 +30,7 @@ Schedule& Schedule::operator=(const Schedule& other) {
     if (this != &other) {
         num_employees = other.num_employees;
         horizon_days = other.horizon_days;
+        num_shift_types = other.num_shift_types;
         assignments = other.assignments;
         cache_valid = other.cache_valid;
         shift_counts = other.shift_counts;

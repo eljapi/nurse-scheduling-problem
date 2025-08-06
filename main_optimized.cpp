@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
     std::cout << "  Memory footprint: " << instance.getMemoryFootprint() << " bytes" << std::endl;
     
     // Create initial schedule using Instance data
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     schedule.randomize(instance.getNumShiftTypes());
     
     std::cout << "\nInitial schedule created with " << instance.getNumEmployees() 

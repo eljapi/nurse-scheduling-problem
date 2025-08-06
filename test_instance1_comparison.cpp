@@ -28,7 +28,7 @@ int main() {
     
     // Test 1: Empty schedule
     std::cout << "\n--- Test 1: Empty Schedule ---" << std::endl;
-    Schedule empty_schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule empty_schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     empty_schedule.clear();
     
     int empty_penalty = constraints.evaluateAll(empty_schedule);
@@ -50,7 +50,7 @@ int main() {
     
     // Test 2: Random schedule
     std::cout << "\n--- Test 2: Random Schedule ---" << std::endl;
-    Schedule random_schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule random_schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     random_schedule.randomize(instance.getNumShiftTypes());
     
     int random_penalty = constraints.evaluateAll(random_schedule);
@@ -61,7 +61,7 @@ int main() {
     
     // Test 3: Specific problematic schedule (all employees work all days)
     std::cout << "\n--- Test 3: All-Work Schedule ---" << std::endl;
-    Schedule all_work_schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule all_work_schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     for (int emp = 0; emp < instance.getNumEmployees(); emp++) {
         for (int day = 0; day < instance.getHorizonDays(); day++) {
             all_work_schedule.setAssignment(emp, day, 1);

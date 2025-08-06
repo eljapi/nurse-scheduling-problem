@@ -7,12 +7,14 @@
 #include "../core/move.h"
 #include "neighborhood.h"
 
+enum class SolveMode { Feasibility, Optimization };
+
 class SimulatedAnnealing {
 public:
     SimulatedAnnealing(const Instance& instance, ConstraintEvaluator& evaluator,
                        double initial_temp, double cooling, int max_iter, int stagnation);
 
-    Schedule solve();
+    Schedule solve(SolveMode mode);
 
 private:
     const Instance& instance;
@@ -26,7 +28,7 @@ private:
     int max_iterations;
     int stagnation_limit;
 
-    double acceptance(double current_score, double new_score, double temperature);
+    double acceptance(double delta, double temperature);
 };
 
 #endif // SIMULATED_ANNEALING_H

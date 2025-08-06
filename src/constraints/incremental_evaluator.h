@@ -9,13 +9,18 @@ public:
     IncrementalEvaluator(ConstraintEvaluator& evaluator, const Schedule& initial_schedule);
 
     double getTotalScore() const;
+    double getHardScore() const;
+    double getSoftScore() const;
+    Schedule getCurrentSchedule() const;
     void applyMove(const Move& move);
     double getDelta(const Move& move);
+    void reset(const Schedule& schedule);
 
 private:
     ConstraintEvaluator& evaluator;
     Schedule current_schedule;
-    double current_score;
+    double current_hard_score;
+    double current_soft_score;
 };
 
 #endif // INCREMENTAL_EVALUATOR_H

@@ -200,7 +200,7 @@ int main() {
     HardConstraints constraints(instance);
     
     // Test with a random schedule
-    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays());
+    Schedule schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     schedule.randomize(instance.getNumShiftTypes());
     
     std::cout << "Testing with random schedule..." << std::endl;

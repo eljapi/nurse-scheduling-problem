@@ -285,7 +285,7 @@ int HardConstraints::evaluateMaxWeekendsWorked(const Schedule& schedule, int emp
     int weekend_count = countWeekendsWorked(schedule, employee_id);
     
     if (weekend_count > worker.MaxWeekends) {
-        penalty -= 100 * weekend_count;
+        penalty -= 100 * (weekend_count - worker.MaxWeekends);
     }
     return penalty;
 }
@@ -499,4 +499,22 @@ std::map<std::string, int> HardConstraints::getConstraintViolations(const Schedu
     violations["PreAssignedDaysOff"] = evaluatePreAssignedDaysOff(schedule);
     violations["ShiftRotation"] = evaluateShiftRotation(schedule);
     return violations;
+}
+
+// Incremental evaluation methods
+
+int HardConstraints::calculateEmployeeDelta(const Schedule& schedule, int employee_id, int day, int new_shift) const {
+    // 1. Guarda la puntuación actual de las restricciones duras para este empleado
+    int old_score = evaluateEmployee(schedule, employee_id);
+    
+    // 2. Crea una copia temporal del horario para simular el cambio de forma segura
+    //    Esta es la única copia temporal que permitiremos, y su alcance es muy limitado.
+    Schedule temp_schedule = schedule;
+    temp_schedule.setAssignment(employee_id, day, new_shift);
+    
+    // 3. Calcula la nueva puntuación del empleado en el horario simulado
+    int new_score = evaluateEmployee(temp_schedule, employee_id);
+    
+    // 4. Devuelve la diferencia. Esto nos da el impacto exacto del movimiento.
+    return new_score - old_score;
 }

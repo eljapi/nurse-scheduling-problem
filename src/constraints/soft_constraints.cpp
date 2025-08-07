@@ -426,3 +426,53 @@ std::map<std::string, int> SoftConstraints::getCoverageGaps(const Schedule& sche
     
     return gaps;
 }
+
+// Incremental evaluation methods
+
+int SoftConstraints::calculateEmployeeDelta(const Schedule& schedule, int employee_id, int day, int new_shift) const {
+    int old_score = evaluateEmployee(schedule, employee_id); // Evalúa On/Off requests para el estado actual
+    Schedule temp_schedule = schedule;
+    temp_schedule.setAssignment(employee_id, day, new_shift);
+    int new_score = evaluateEmployee(temp_schedule, employee_id); // Evalúa On/Off requests para el estado nuevo
+    return new_score - old_score;
+}
+
+int SoftConstraints::calculateCoverageDelta(const Schedule& schedule, int day, int old_shift, int new_shift) const {
+    if (old_shift == new_shift) {
+        return 0; // Si no hay cambio de turno, no hay cambio de cobertura.
+    }
+    
+    int delta = 0;
+    const auto& cover_requirements = instance.getCoverageRequirements();
+    
+    // Función lambda para calcular el cambio de penalización para un solo turno
+    auto get_penalty_change = [&](int shift, int change) { // change es +1 o -1
+        if (shift <= 0) return 0;
+        int penalty_change = 0;
+        for (const auto& cover : cover_requirements) {
+            if (cover.Day == day && findShiftIndex(cover.ShiftID) == shift) {
+                int current_coverage = schedule.getCoverage(day, shift);
+                int required = cover.Requirement;
+                int new_coverage = current_coverage + change;
+                
+                int old_penalty = (current_coverage < required) ? (current_coverage - required) * abs(cover.Weight_for_under) :
+                                 (current_coverage > required) ? (current_coverage - required) * abs(cover.Weight_for_over) : 0;
+                                 
+                int new_penalty = (new_coverage < required) ? (new_coverage - required) * abs(cover.Weight_for_under) :
+                                 (new_coverage > required) ? (new_coverage - required) * abs(cover.Weight_for_over) : 0;
+                                 
+                penalty_change = new_penalty - old_penalty;
+                break;
+            }
+        }
+        return penalty_change;
+    };
+    
+    // Al dejar el 'old_shift', la cobertura de ese turno disminuye en 1.
+    delta += get_penalty_change(old_shift, -1);
+    
+    // Al tomar el 'new_shift', la cobertura de ese turno aumenta en 1.
+    delta += get_penalty_change(new_shift, +1);
+    
+    return delta;
+}

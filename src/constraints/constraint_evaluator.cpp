@@ -9,6 +9,7 @@ double ConstraintEvaluator::getHardConstraintViolations(const Schedule& schedule
     score += hard_constraints.evaluateWorkingTimeConstraints(schedule);
     score += hard_constraints.evaluateMaxConsecutiveShifts(schedule);
     score += hard_constraints.evaluateMinConsecutiveShifts(schedule);
+    score += hard_constraints.evaluateMinConsecutiveDaysOff(schedule);  // This was missing!
     score += hard_constraints.evaluateMaxWeekendsWorked(schedule);
     score += hard_constraints.evaluatePreAssignedDaysOff(schedule);
     score += hard_constraints.evaluateShiftRotation(schedule);
@@ -25,10 +26,10 @@ double ConstraintEvaluator::getSoftConstraintViolations(const Schedule& schedule
 
 double ConstraintEvaluator::evaluateSchedule(const Schedule& schedule) {
     double hard_violations = getHardConstraintViolations(schedule);
-    if (hard_violations > 0) {
+    if (hard_violations < 0) {  // Hard constraints violated (negative penalty)
         return hard_violations;
     }
-    return getSoftConstraintViolations(schedule);
+    return getSoftConstraintViolations(schedule);  // Feasible solution, optimize soft constraints
 }
 
 bool ConstraintEvaluator::isFeasible(const Schedule& schedule) {
@@ -41,6 +42,7 @@ double ConstraintEvaluator::getEmployeeHardConstraintViolations(const Schedule& 
     score += hard_constraints.evaluateWorkingTimeConstraints(schedule, employee_id);
     score += hard_constraints.evaluateMaxConsecutiveShifts(schedule, employee_id);
     score += hard_constraints.evaluateMinConsecutiveShifts(schedule, employee_id);
+    score += hard_constraints.evaluateMinConsecutiveDaysOff(schedule, employee_id);  // This was missing!
     score += hard_constraints.evaluateMaxWeekendsWorked(schedule, employee_id);
     score += hard_constraints.evaluatePreAssignedDaysOff(schedule, employee_id);
     score += hard_constraints.evaluateShiftRotation(schedule, employee_id);

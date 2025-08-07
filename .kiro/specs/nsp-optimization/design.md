@@ -2,7 +2,7 @@
 
 ## Overview
 
-El diseño se enfoca en una reestructuración incremental del código NSP existente, aplicando optimizaciones progresivas mientras se mantiene la funcionalidad. La arquitectura propuesta separa claramente las responsabilidades y prepara el código para futuras optimizaciones con CUDA.
+El diseño implementa mejoras específicas basadas en investigación académica para el algoritmo de Simulated Annealing aplicado al Nurse Scheduling Problem. Las mejoras principales incluyen: (1) una heurística de generación de solución inicial factible de 5 pasos, (2) implementación de 8 estructuras de vecindario especializadas, (3) evaluación incremental verdadera para eliminar cuellos de botella, y (4) ajuste automático de parámetros basado en el tamaño del problema. Estas mejoras están fundamentadas en el paper de investigación que demuestra su efectividad estadística.
 
 ## Architecture
 
@@ -18,22 +18,28 @@ nsp/
 │   ├── constraints/
 │   │   ├── hard_constraints.h/cpp   # Restricciones duras
 │   │   ├── soft_constraints.h/cpp   # Restricciones blandas
-│   │   └── constraint_evaluator.h/cpp # Evaluador unificado
+│   │   ├── constraint_evaluator.h/cpp # Evaluador unificado
+│   │   └── incremental_evaluator.h/cpp # Evaluación incremental verdadera
 │   ├── metaheuristics/
-│   │   ├── simulated_annealing.h/cpp # SA mejorado
-│   │   ├── neighborhood.h/cpp        # Operadores de vecindario
-│   │   └── cooling_schedule.h/cpp    # Esquemas de enfriamiento
+│   │   ├── simulated_annealing.h/cpp # SA con parámetros adaptativos
+│   │   ├── initial_solution.h/cpp    # Heurística de solución inicial de 5 pasos
+│   │   ├── neighborhood.h/cpp        # 8 estructuras de vecindario del paper
+│   │   └── parameter_tuning.h/cpp    # Ajuste automático de parámetros
 │   ├── utils/
 │   │   ├── timer.h/cpp              # Medición de tiempo
 │   │   ├── random.h/cpp             # Generación aleatoria
 │   │   └── logger.h/cpp             # Sistema de logging
-│   └── cuda/
-│       ├── cuda_constraints.cu      # Restricciones en CUDA (futuro)
-│       └── cuda_utils.cuh           # Utilidades CUDA (futuro)
+│   └── moves/
+│       ├── merge_split_move.h/cpp   # Movimientos Merge/Split (NS1, NS2)
+│       ├── block_swap_move.h/cpp    # Block Swap (NS3)
+│       ├── three_way_swap_move.h/cpp # 3-Way-Swap (NS8)
+│       └── combined_neighborhood.h/cpp # Combined Neighborhood Structure (CNS)
 ├── tests/
 │   ├── test_runner.cpp              # Ejecutor de pruebas
-│   ├── instance_tests.cpp           # Pruebas por instancia
-│   └── performance_tests.cpp        # Pruebas de rendimiento
+│   ├── initial_solution_tests.cpp   # Pruebas de heurística inicial
+│   ├── neighborhood_tests.cpp       # Pruebas de movimientos
+│   ├── incremental_eval_tests.cpp   # Pruebas de evaluación incremental
+│   └── performance_tests.cpp        # Benchmarks comparativos
 ├── instances/                       # Instancias de prueba
 └── main.cpp                         # Punto de entrada principal
 ```

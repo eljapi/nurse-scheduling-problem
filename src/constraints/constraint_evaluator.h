@@ -9,7 +9,6 @@
 class ConstraintEvaluator {
 public:
     const Instance& instance;
-private:
     HardConstraints hard_constraints;
     SoftConstraints soft_constraints;
 

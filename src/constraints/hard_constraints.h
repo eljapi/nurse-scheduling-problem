@@ -168,6 +168,19 @@ public:
      */
     std::vector<std::pair<int, int>> getViolatingAssignments(const Schedule& schedule) const;
     std::map<std::string, int> getConstraintViolations(const Schedule& schedule) const;
+    
+    // Incremental evaluation methods
+    
+    /**
+     * Calcula el cambio en la puntuación de restricciones duras para un solo empleado
+     * si se realiza un movimiento, sin modificar el horario global.
+     * @param schedule El horario actual, sin modificar.
+     * @param employee_id El empleado afectado por el cambio.
+     * @param day El día en que ocurre el cambio.
+     * @param new_shift El nuevo turno que se asignaría.
+     * @return El cambio en la puntuación (delta). Un valor positivo indica una mejora.
+     */
+    int calculateEmployeeDelta(const Schedule& schedule, int employee_id, int day, int new_shift) const;
 };
 
 #endif // HARD_CONSTRAINTS_H

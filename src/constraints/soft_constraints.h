@@ -152,6 +152,19 @@ public:
      * @return Map with coverage gaps
      */
     std::map<std::string, int> getCoverageGaps(const Schedule& schedule) const;
+    
+    // Incremental evaluation methods
+    
+    /**
+     * Calcula el delta en la puntuación de las preferencias de un empleado (On/Off Requests).
+     */
+    int calculateEmployeeDelta(const Schedule& schedule, int employee_id, int day, int new_shift) const;
+    
+    /**
+     * Calcula el delta en la puntuación de cobertura para un día específico
+     * si un turno se deja y otro se toma.
+     */
+    int calculateCoverageDelta(const Schedule& schedule, int day, int old_shift, int new_shift) const;
 };
 
 #endif // SOFT_CONSTRAINTS_H

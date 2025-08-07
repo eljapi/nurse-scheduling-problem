@@ -6,7 +6,7 @@
   - Create directory structure following the modular design
   - Implement basic TestRunner class to verify Instance1 functionality with current code
   - Create Makefile or CMakeLists.txt for build system
-  - _Requirements: 1.3, 5.1, 5.4_
+  - _Requirements: 7.1, 7.4_
 
 - [ ] 2. Extract and modularize core data structures
 
@@ -81,123 +81,172 @@
     - Verify performance improvements with benchmarking
     - _Requirements: 2.1, 2.4_
 
-- [ ] 5. Extract and improve the Simulated Annealing metaheuristic
+- [ ] 5. Implement research-based initial solution generation (Highest Impact)
 
-  - [ ] 5.1 Create SimulatedAnnealing class
-
-    - Review current SA implementation in main.cpp (temperature, cooling, acceptance function)
-    - Extract SA logic from main.cpp into dedicated class
-    - Implement configurable parameters (temperature, cooling rate, iterations)
-    - Ensure Instance1 still solves correctly with extracted SA
-    - _Requirements: 1.3, 3.2, 4.3_
-
-  - [ ] 5.2 Implement improved neighborhood operators
-
-    - Review current neighborhood exploration in main.cpp (nested loops changing shifts)
-    - Create Neighborhood class with multiple move operators
-    - Implement single-shift change, shift swap, and block moves
-    - Add intelligent move selection based on constraint violations
-    - _Requirements: 3.1, 3.2, 4.1_
-
-  - [x] 5.3 Add incremental constraint evaluation
+  - [-] 5.1 Implement the 5-step feasible initial solution heuristic
 
 
 
 
-    - Implement IncrementalEvaluator for efficient move evaluation
-    - Cache constraint contributions and update incrementally
-    - Verify correctness and measure performance improvements
-    - _Requirements: 2.4, 3.1, 3.2_
+    - Create InitialSolutionGenerator class based on the paper's algorithm
+    - Implement Step 1: Assign annual leave (PreAssignedDaysOff) by blocking those cells
+    - Implement Step 2: Cover weekend requirements ensuring each nurse has ≥2 weekends off
+    - Implement Step 3: Assign shifts for first 4 days considering previous schedule constraints
+    - Implement Step 4: Iterate day-by-day for remaining horizon, assigning shifts to meet coverage
+    - Implement Step 5: Adjust working hours by adding shifts to meet minimum hour requirements
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
 
-- [ ] 6. Enhance metaheuristic to solve multiple instances
+  - [ ] 5.2 Replace random initialization with feasible initial solution
 
-  - [ ] 6.1 Improve cooling schedule and parameter tuning
+    - Replace current schedule.randomize() calls with InitialSolutionGenerator::generateFeasibleSolution()
+    - Verify that generated initial solutions are feasible or very close to feasible
+    - Measure improvement in initial solution quality compared to random initialization
+    - Test with multiple instances to ensure robustness
+    - _Requirements: 3.1, 7.5_
 
-    - Implement adaptive cooling schedules
-    - Add parameter auto-tuning based on problem characteristics
-    - Test with Instance1, Instance2, and Instance3
-    - _Requirements: 3.1, 3.2, 3.3_
+  - [ ] 5.3 Validate initial solution quality improvements
 
-  - [ ] 6.2 Add diversification and intensification strategies
+    - Create tests to measure feasibility percentage of initial solutions
+    - Compare initial solution scores with random initialization baseline
+    - Verify that SA converges faster from better initial solutions
+    - Document the improvement in number of iterations to reach first feasible solution
+    - _Requirements: 7.5, 7.1_
 
+- [ ] 6. Implement the 8 neighborhood structures from research (Core Algorithm)
 
+  - [ ] 6.1 Implement Merge/Split moves (NS1, NS2)
 
+    - Create MergeMove class: convert M+E shifts to L when preferences justify it
+    - Create SplitMove class: convert L shift to M+E when preferences are better
+    - Implement logic to find valid merge/split opportunities based on shift preferences
+    - Add feasibility checking to ensure moves don't violate hard constraints
+    - Write unit tests for merge/split move generation and application
+    - _Requirements: 4.1, 4.6_
 
+  - [ ] 6.2 Implement Block Swap move (NS3)
 
-    - Implement restart mechanisms when search stagnates
-    - Add tabu-like memory to avoid cycling
-    - Implement local search intensification phases
-    - _Requirements: 3.1, 3.2, 3.3_
+    - Create BlockSwapMove class for cross-exchange between 2 employees and 2 days
+    - Implement logic: employee1 swaps shifts between day1 and day2, employee2 does same
+    - Add validation to ensure block swap maintains feasibility
+    - Write unit tests for block swap move generation and application
+    - _Requirements: 4.2, 4.6_
 
-  - [ ] 6.3 Validate solution quality across multiple instances
-    - Run comprehensive tests on all available instances
-    - Compare solution quality with original implementation
-    - Document performance improvements and success rates
-    - _Requirements: 3.1, 3.3, 5.1, 5.3_
+  - [ ] 6.3 Implement 3-Way-Swap move (NS8)
 
-- [ ] 7. Prepare code structure for CUDA integration
+    - Create ThreeWaySwapMove class for cyclic exchange of 3 employees on same day
+    - Implement logic: shift of emp1 → emp2, shift of emp2 → emp3, shift of emp3 → emp1
+    - Add validation to ensure 3-way swap maintains coverage and feasibility
+    - Write unit tests for 3-way swap move generation and application
+    - _Requirements: 4.3, 4.6_
 
-  - [ ] 7.1 Separate computation from control logic
+  - [ ] 6.4 Implement Combined Neighborhood Structure (CNS)
 
-    - Review current code to identify computationally intensive functions and side effects
-    - Identify and isolate computationally intensive functions
-    - Create pure functions without side effects for constraint evaluation
-    - Implement data-parallel friendly algorithms
-    - _Requirements: 4.1, 4.2, 4.3_
+    - Create CombinedNeighborhood class that tries all 8 move types per iteration
+    - Implement strategy to generate one move of each type and select the best one
+    - Replace current random move selection with CNS best-move selection
+    - Verify that CNS produces better results than individual move types
+    - _Requirements: 4.4, 4.6_
 
-  - [ ] 7.2 Create GPU-friendly data structures
+- [ ] 7. Implement true incremental evaluation (Critical Prerequisite)
 
-    - Design flat, contiguous memory layouts for GPU transfer
-    - Implement serialization/deserialization for GPU data
-    - Create mock CUDA interfaces for future implementation
-    - _Requirements: 4.1, 4.2, 4.3_
+  - [ ] 7.1 Refactor IncrementalEvaluator for true incremental computation
 
-  - [ ] 7.3 Document parallelization strategy
-    - Identify specific functions and loops suitable for CUDA parallelization
-    - Document memory access patterns and optimization opportunities
-    - Create roadmap for CUDA kernel implementation
-    - _Requirements: 4.2, 6.4_
+    - Review current IncrementalEvaluator and identify why it's not truly incremental
+    - Redesign to maintain separate scores for each employee and each day
+    - Implement delta calculation that only recalculates affected constraints
+    - Create state management for constraint contributions by employee and day
+    - _Requirements: 5.1, 5.2, 5.6_
 
-- [ ] 8. Implement comprehensive testing and benchmarking system
+  - [ ] 7.2 Implement constraint-specific delta calculations
 
-  - [ ] 8.1 Create automated regression testing
+    - Create delta calculation methods for each constraint type (max shifts, consecutive work, etc.)
+    - Implement employee-specific delta calculation for constraints affecting individual employees
+    - Implement day-specific delta calculation for coverage constraints
+    - Ensure delta calculations produce exactly the same results as full evaluation
+    - _Requirements: 5.2, 5.5_
 
-    - Implement test suite that runs all instances automatically
-    - Add performance regression detection
-    - Create continuous integration setup for testing
-    - _Requirements: 5.1, 5.2, 5.3, 5.4_
+  - [ ] 7.3 Add move application and reversion with state updates
 
-  - [ ] 8.2 Add performance profiling and benchmarking
+    - Implement applyMove() that updates incremental state efficiently
+    - Implement revertMove() that can undo changes without full recalculation
+    - Add validation mode that compares incremental results with full evaluation
+    - Measure performance improvement: should be 10-50x faster than full evaluation
+    - _Requirements: 5.3, 5.4, 5.6_
 
-    - Implement detailed timing for each optimization phase
-    - Add memory usage profiling and reporting
-    - Create performance comparison reports
-    - _Requirements: 2.4, 5.4, 6.2_
+  - [ ] 7.4 Integrate incremental evaluator with new neighborhood structures
 
-  - [ ] 8.3 Validate correctness and solution quality
-    - Implement solution feasibility checking
-    - Add solution quality metrics and comparison tools
-    - Verify all instances produce valid, high-quality solutions
-    - _Requirements: 5.2, 5.3, 3.3_
+    - Update all 8 move types to work with the new incremental evaluator
+    - Ensure CNS can efficiently evaluate all move types using incremental computation
+    - Verify that multiple move evaluations per iteration don't cause performance bottlenecks
+    - Test that incremental evaluation enables practical use of all 8 neighborhood structures
+    - _Requirements: 5.1, 5.6, 4.4_
 
-- [ ] 9. Documentation and code cleanup
+- [ ] 8. Implement adaptive parameter tuning based on problem size
 
-  - [ ] 9.1 Add comprehensive code documentation
+  - [ ] 8.1 Create ParameterTuner class with research-based parameter sets
 
-    - Document all classes, methods, and key algorithms
-    - Add inline comments explaining optimization rationale
-    - Create API documentation for main interfaces
-    - _Requirements: 6.1, 6.2_
+    - Implement ParameterTuner class with predefined parameter sets for different problem sizes
+    - Define small problem parameters (1-10 employees) based on paper's Table 5
+    - Define medium problem parameters (11-30 employees) based on paper's recommendations
+    - Define large problem parameters (31-60 employees) based on paper's findings
+    - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-  - [ ] 9.2 Create user guide and optimization report
+  - [ ] 8.2 Integrate automatic parameter selection into SimulatedAnnealing
 
-    - Document how to build and run the optimized version
-    - Create report comparing performance before and after optimizations
-    - Document lessons learned and future improvement opportunities
-    - _Requirements: 6.2, 6.3, 6.4_
+    - Modify SimulatedAnnealing constructor to automatically detect problem size
+    - Implement logic to select appropriate parameter set based on num_employees and horizon
+    - Add logging to document which parameter set is being used for each instance
+    - Verify that different instances use appropriate parameter sets automatically
+    - _Requirements: 6.1, 6.5, 6.6_
 
-  - [ ] 9.3 Final integration testing and validation
-    - Run complete test suite on all instances
-    - Verify all optimizations work together correctly
-    - Create final performance benchmarks and quality metrics
-    - _Requirements: 1.2, 2.2, 3.3, 5.1_
+  - [ ] 8.3 Validate parameter tuning effectiveness
+
+    - Run comparative tests using fixed parameters vs adaptive parameters
+    - Measure performance improvement across different instance sizes
+    - Document which parameter set works best for each type of problem
+    - Verify that adaptive tuning improves average performance across all instances
+    - _Requirements: 6.6, 7.4_
+
+- [ ] 9. Implement comprehensive testing and validation system
+
+  - [ ] 9.1 Create tests for initial solution quality
+
+    - Implement tests that measure feasibility percentage of generated initial solutions
+    - Create baseline comparison with random initialization
+    - Add tests to verify that initial solutions satisfy most hard constraints
+    - Measure improvement in SA convergence speed from better initial solutions
+    - _Requirements: 7.1, 7.5_
+
+  - [ ] 9.2 Create tests for neighborhood structure effectiveness
+
+    - Implement tests that validate each of the 8 move types works correctly
+    - Create statistical tests to verify CNS outperforms individual move types
+    - Add tests to measure solution quality improvement from enhanced neighborhoods
+    - Verify that new moves maintain feasibility and improve objective function
+    - _Requirements: 7.2, 7.6_
+
+  - [ ] 9.3 Create performance benchmarking and regression testing
+
+    - Implement comprehensive benchmarking comparing old vs new implementation
+    - Add automated tests that detect performance regressions
+    - Create tests that verify incremental evaluation produces identical results to full evaluation
+    - Measure and document overall performance improvements (target: 60-80% faster)
+    - _Requirements: 7.3, 7.4_
+
+- [ ] 10. Final integration and validation
+
+  - [ ] 10.1 Integration testing with all improvements combined
+
+    - Test complete system with initial solution + 8 neighborhoods + incremental evaluation + adaptive parameters
+    - Verify that all improvements work together without conflicts
+    - Run comprehensive tests on all available instances (Instance1, Instance2, Instance3, etc.)
+    - Validate that combined system produces consistently better results than original
+    - _Requirements: 7.1, 7.2, 7.3, 7.4_
+
+  - [ ] 10.2 Create final performance report and documentation
+
+    - Document performance improvements achieved by each optimization
+    - Create comparison report showing before/after metrics for solution quality and execution time
+    - Document lessons learned from implementing research-based improvements
+    - Create user guide for running the optimized NSP solver
+    - _Requirements: 7.4, 7.6_

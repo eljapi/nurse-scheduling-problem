@@ -48,123 +48,250 @@ nsp/
 
 ### Core Components
 
-#### DataStructures
+#### Initial Solution Generator (Heurística de 5 Pasos)
 ```cpp
-class Schedule {
-private:
-    std::vector<std::vector<int>> assignments; // [employee][day] = shift_id
-    int num_employees;
-    int horizon_days;
-    
-public:
-    void setAssignment(int employee, int day, int shift);
-    int getAssignment(int employee, int day) const;
-    Schedule copy() const;
-    void randomize(const Instance& instance);
-};
-
-class Instance {
-private:
-    int horizon;
-    std::vector<Staff> staff;
-    std::vector<Shift> shifts;
-    std::vector<DayOff> days_off;
-    std::vector<ShiftRequest> shift_requests;
-    std::vector<CoverRequirement> cover_requirements;
-    
-public:
-    // Getters optimizados con referencias const
-    const std::vector<Staff>& getStaff() const;
-    const Shift& getShift(int id) const;
-    bool isValidAssignment(int employee, int day, int shift) const;
-};
-```
-
-#### ConstraintEvaluator
-```cpp
-class ConstraintEvaluator {
+class InitialSolutionGenerator {
 private:
     const Instance& instance;
-    HardConstraints hard_constraints;
-    SoftConstraints soft_constraints;
     
 public:
-    double evaluateSchedule(const Schedule& schedule);
-    bool isFeasible(const Schedule& schedule);
-    double getHardConstraintViolations(const Schedule& schedule);
-    double getSoftConstraintPenalties(const Schedule& schedule);
-};
-```
-
-### Optimization Strategy
-
-#### Phase 1: Code Restructuring
-- Separar el código monolítico en módulos
-- Reemplazar arrays dinámicos por std::vector con reserva de memoria
-- Implementar clases RAII para manejo de memoria
-- Crear interfaces claras entre componentes
-
-#### Phase 2: Data Structure Optimization
-- Usar std::array para datos de tamaño fijo conocido
-- Implementar cache-friendly data layouts
-- Optimizar acceso a memoria con localidad espacial
-- Usar bitsets para flags booleanos cuando sea apropiado
-
-#### Phase 3: Algorithm Optimization
-- Implementar evaluación incremental de restricciones
-- Optimizar operadores de vecindario
-- Mejorar el esquema de enfriamiento de SA
-- Implementar múltiples estrategias de búsqueda local
-
-#### Phase 4: CUDA Preparation
-- Identificar funciones paralelizables
-- Separar lógica de datos
-- Implementar estructuras de datos GPU-friendly
-- Crear interfaces para kernels CUDA
-
-## Data Models
-
-### Optimized Data Structures
-
-```cpp
-// Reemplazo de vectores por estructuras más eficientes
-struct OptimizedStaff {
-    std::string id;
-    std::array<int, MAX_SHIFT_TYPES> max_shifts;
-    int max_total_minutes;
-    int min_total_minutes;
-    int max_consecutive_shifts;
-    int min_consecutive_shifts;
-    int min_consecutive_days_off;
-    int max_weekends;
-};
-
-// Cache-friendly schedule representation
-class CompactSchedule {
+    Schedule generateFeasibleSolution();
+    
 private:
-    std::vector<uint8_t> assignments; // Packed representation
-    int num_employees;
-    int horizon_days;
+    void assignAnnualLeave(Schedule& schedule);           // Paso 1: Licencias anuales
+    void assignWeekends(Schedule& schedule);              // Paso 2: Fines de semana
+    void assignInitialDays(Schedule& schedule);           // Paso 3: Primeros 4 días
+    void assignRemainingHorizon(Schedule& schedule);      // Paso 4: Resto del horizonte
+    void adjustWorkingHours(Schedule& schedule);          // Paso 5: Ajuste de horas
     
-public:
-    void setAssignment(int employee, int day, uint8_t shift);
-    uint8_t getAssignment(int employee, int day) const;
-    size_t getMemoryFootprint() const;
+    bool canAssignShift(int employee, int day, int shift, const Schedule& schedule) const;
+    std::vector<int> getAvailableEmployees(int day, int shift, const Schedule& schedule) const;
 };
 ```
 
-### Constraint Evaluation Optimization
+#### Enhanced Neighborhood Structures (8 Movimientos del Paper)
+```cpp
+class CombinedNeighborhood {
+private:
+    std::vector<std::unique_ptr<NeighborhoodMove>> moves;
+    
+public:
+    CombinedNeighborhood(const Instance& instance);
+    Move getBestMove(const Schedule& schedule, const IncrementalEvaluator& evaluator);
+    
+private:
+    void initializeMoves();
+};
 
+// Movimiento Merge/Split (NS1, NS2)
+class MergeSplitMove : public NeighborhoodMove {
+public:
+    Move generateMove(const Schedule& schedule) override;
+    
+private:
+    Move generateMergeMove(const Schedule& schedule);     // M + E -> L
+    Move generateSplitMove(const Schedule& schedule);     // L -> M + E
+};
+
+// Block Swap (NS3)
+class BlockSwapMove : public NeighborhoodMove {
+public:
+    Move generateMove(const Schedule& schedule) override;
+    
+private:
+    bool isValidBlockSwap(int emp1, int emp2, int day1, int day2, const Schedule& schedule) const;
+};
+
+// 3-Way-Swap (NS8)
+class ThreeWaySwapMove : public NeighborhoodMove {
+public:
+    Move generateMove(const Schedule& schedule) override;
+    
+private:
+    bool isValidThreeWaySwap(int emp1, int emp2, int emp3, int day, const Schedule& schedule) const;
+};
+```
+
+#### True Incremental Evaluator
 ```cpp
 class IncrementalEvaluator {
 private:
-    double current_score;
-    std::vector<double> constraint_contributions;
+    const Instance& instance;
+    double current_total_score;
+    std::vector<double> employee_constraint_scores;  // Score por empleado
+    std::vector<double> day_coverage_scores;         // Score por día
+    std::vector<double> constraint_contributions;    // Score por tipo de restricción
     
 public:
-    double evaluateMove(const Schedule& schedule, int employee, int day, int old_shift, int new_shift);
-    void applyMove(int employee, int day, int old_shift, int new_shift);
-    void recomputeFromScratch(const Schedule& schedule);
+    IncrementalEvaluator(const Instance& instance);
+    
+    void initialize(const Schedule& schedule);
+    double evaluateMove(const Move& move, const Schedule& schedule);
+    void applyMove(const Move& move);
+    void revertMove(const Move& move);
+    
+    double getCurrentScore() const { return current_total_score; }
+    
+private:
+    double calculateEmployeeDelta(int employee, const Move& move, const Schedule& schedule);
+    double calculateCoverageDelta(const Move& move, const Schedule& schedule);
+    void updateEmployeeScore(int employee, double delta);
+    void updateCoverageScore(int day, double delta);
+};
+```
+
+#### Adaptive Parameter Tuning
+```cpp
+class ParameterTuner {
+public:
+    struct SAParameters {
+        double initial_temperature;
+        double cooling_rate;
+        int max_iterations;
+        int stagnation_limit;
+    };
+    
+    static SAParameters getParametersForProblemSize(int num_employees, int horizon_days);
+    
+private:
+    static SAParameters small_problem_params;   // 1-10 enfermeras
+    static SAParameters medium_problem_params;  // 11-30 enfermeras  
+    static SAParameters large_problem_params;   // 31-60 enfermeras
+};
+```
+
+### Research-Based Optimization Strategy
+
+#### Phase 1: Initial Solution Generation (Mayor Impacto)
+- Implementar la heurística de 5 pasos del paper para generar soluciones iniciales factibles
+- Reemplazar `schedule.randomize()` por `InitialSolutionGenerator::generateFeasibleSolution()`
+- Asegurar que el SA comience desde un punto mucho mejor que una solución aleatoria
+- Validar que la solución inicial cumple con la mayoría de restricciones duras
+
+#### Phase 2: Enhanced Neighborhood Structures (Corazón del Algoritmo)
+- Implementar las 8 estructuras de vecindario del paper
+- Priorizar Merge/Split (NS1, NS2), Block Swap (NS3), y 3-Way-Swap (NS8)
+- Implementar Combined Neighborhood Structure (CNS) que prueba todos los movimientos
+- Reemplazar la selección aleatoria de movimientos por selección inteligente del mejor
+
+#### Phase 3: True Incremental Evaluation (Prerequisito Crítico)
+- Refactorizar completamente el IncrementalEvaluator para evaluación verdaderamente incremental
+- Calcular solo el delta de restricciones afectadas por cada movimiento
+- Mantener estado de puntuaciones por empleado y por día para updates eficientes
+- Eliminar el cuello de botella de re-evaluación completa en cada iteración
+
+#### Phase 4: Adaptive Parameter Tuning
+- Implementar selección automática de parámetros basada en tamaño del problema
+- Usar diferentes configuraciones para problemas pequeños, medianos y grandes
+- Basar los parámetros en los valores optimizados reportados en el paper
+- Documentar qué conjunto de parámetros se usa para cada instancia
+
+## Data Models
+
+### Move Representation for 8 Neighborhood Structures
+
+```cpp
+// Base class for all move types
+class Move {
+public:
+    enum Type { CHANGE, SWAP, MERGE, SPLIT, BLOCK_SWAP, THREE_WAY_SWAP };
+    
+    virtual ~Move() = default;
+    virtual Type getType() const = 0;
+    virtual void apply(Schedule& schedule) = 0;
+    virtual void revert(Schedule& schedule) = 0;
+    virtual std::string toString() const = 0;
+};
+
+// Merge Move: M + E -> L (NS1)
+class MergeMove : public Move {
+private:
+    int employee_morning;    // Empleado con turno M
+    int employee_evening;    // Empleado con turno E  
+    int day;                // Día del merge
+    
+public:
+    MergeMove(int emp_m, int emp_e, int d) : employee_morning(emp_m), employee_evening(emp_e), day(d) {}
+    Type getType() const override { return MERGE; }
+    void apply(Schedule& schedule) override;
+    void revert(Schedule& schedule) override;
+};
+
+// Split Move: L -> M + E (NS2)
+class SplitMove : public Move {
+private:
+    int employee_long;       // Empleado con turno L
+    int employee_free;       // Empleado libre que tomará E
+    int day;                // Día del split
+    
+public:
+    SplitMove(int emp_l, int emp_f, int d) : employee_long(emp_l), employee_free(emp_f), day(d) {}
+    Type getType() const override { return SPLIT; }
+    void apply(Schedule& schedule) override;
+    void revert(Schedule& schedule) override;
+};
+
+// Block Swap: Intercambio cruzado (NS3)
+class BlockSwapMove : public Move {
+private:
+    int employee1, employee2;
+    int day1, day2;
+    int old_shift1_day1, old_shift1_day2;  // Turnos originales de emp1
+    int old_shift2_day1, old_shift2_day2;  // Turnos originales de emp2
+    
+public:
+    BlockSwapMove(int e1, int e2, int d1, int d2) : employee1(e1), employee2(e2), day1(d1), day2(d2) {}
+    Type getType() const override { return BLOCK_SWAP; }
+    void apply(Schedule& schedule) override;
+    void revert(Schedule& schedule) override;
+};
+
+// 3-Way Swap: Intercambio cíclico (NS8)
+class ThreeWaySwapMove : public Move {
+private:
+    int employee1, employee2, employee3;
+    int day;
+    int old_shift1, old_shift2, old_shift3;  // Turnos originales
+    
+public:
+    ThreeWaySwapMove(int e1, int e2, int e3, int d) : employee1(e1), employee2(e2), employee3(e3), day(d) {}
+    Type getType() const override { return THREE_WAY_SWAP; }
+    void apply(Schedule& schedule) override;
+    void revert(Schedule& schedule) override;
+};
+```
+
+### Incremental Evaluation State
+
+```cpp
+class IncrementalEvaluationState {
+private:
+    // Puntuaciones por empleado para restricciones que los afectan individualmente
+    struct EmployeeScores {
+        double max_shifts_penalty;
+        double consecutive_shifts_penalty;
+        double min_rest_penalty;
+        double weekend_penalty;
+        double shift_requests_penalty;
+    };
+    
+    // Puntuaciones por día para restricciones de cobertura
+    struct DayScores {
+        double coverage_penalty;
+        double skill_coverage_penalty;
+    };
+    
+    std::vector<EmployeeScores> employee_scores;
+    std::vector<DayScores> day_scores;
+    double total_score;
+    
+public:
+    void initialize(const Schedule& schedule, const Instance& instance);
+    double calculateMoveDelta(const Move& move, const Schedule& schedule, const Instance& instance);
+    void applyMoveDelta(const Move& move, double delta);
+    void revertMoveDelta(const Move& move, double delta);
+    
+    double getTotalScore() const { return total_score; }
 };
 ```
 
@@ -233,24 +360,29 @@ __global__ void evaluateConstraintsKernel(
 );
 ```
 
-## Performance Targets
+## Performance Targets Based on Research
 
-### Phase 1 (Restructuring)
-- Mantener tiempo de ejecución actual (±5%)
-- Reducir uso de memoria en 10-20%
-- Mejorar legibilidad y mantenibilidad del código
+### Phase 1 (Initial Solution Generation)
+- Generar soluciones iniciales factibles o muy cercanas a la factibilidad (>90% de restricciones duras cumplidas)
+- Reducir el número de iteraciones necesarias para encontrar la primera solución factible en 80-90%
+- Mejorar la puntuación inicial promedio en 50-70% comparado con inicialización aleatoria
 
-### Phase 2 (Data Structure Optimization)  
-- Reducir tiempo de ejecución en 20-30%
-- Reducir uso de memoria en 30-40%
-- Mantener exactitud de resultados
+### Phase 2 (Enhanced Neighborhood Structures)
+- Implementar los 8 movimientos del paper con correctitud verificada
+- Demostrar que Combined Neighborhood Structure (CNS) supera estadísticamente a movimientos individuales
+- Mejorar la calidad de soluciones finales en 15-25% comparado con movimientos básicos
 
-### Phase 3 (Algorithm Optimization)
-- Resolver Instance2 e Instance3 exitosamente
-- Mejorar calidad de soluciones en 15-25%
-- Reducir tiempo de convergencia en 40-50%
+### Phase 3 (True Incremental Evaluation)
+- Acelerar la evaluación de movimientos en 10-50x eliminando re-evaluación completa
+- Permitir probar todos los 8 tipos de movimiento en cada iteración sin penalización de rendimiento
+- Mantener exactitud perfecta (delta incremental = evaluación completa)
 
-### Phase 4 (CUDA Integration)
-- Acelerar evaluación de restricciones 5-10x
-- Permitir exploración de vecindarios más grandes
-- Escalar a instancias de mayor tamaño
+### Phase 4 (Adaptive Parameter Tuning)
+- Seleccionar automáticamente parámetros óptimos basados en tamaño del problema
+- Mejorar el rendimiento promedio en 10-20% comparado con parámetros fijos
+- Resolver exitosamente instancias de diferentes tamaños (1-60 enfermeras) con parámetros apropiados
+
+### Overall System Performance
+- Resolver Instance1, Instance2, Instance3, y instancias adicionales con alta calidad
+- Reducir tiempo total de ejecución en 60-80% mediante todas las optimizaciones combinadas
+- Generar soluciones consistentemente mejores que la implementación original

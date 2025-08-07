@@ -23,6 +23,7 @@ g++ -std=c++17 -Wall -Wextra -O2 -Isrc -c src/constraints/incremental_evaluator.
 
 echo Compiling metaheuristics modules...
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc -c src/metaheuristics/neighborhood.cpp -o build/neighborhood.o
+g++ -std=c++17 -Wall -Wextra -O2 -Isrc -c src/metaheuristics/initial_solution.cpp -o build/initial_solution.o
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc -c src/metaheuristics/simulated_annealing.cpp -o build/simulated_annealing.o
 
 echo Compiling tests...
@@ -31,10 +32,11 @@ g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -Isrc/constraints -c tests/test_hard
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -Isrc/constraints -c tests/test_soft_constraints.cpp -o build/tests/test_soft_constraints.o
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -Isrc/constraints -c tests/test_solution_validator.cpp -o build/tests/test_solution_validator.o
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -Isrc/constraints -c tests/test_instance10_validator.cpp -o build/tests/test_instance10_validator.o
+g++ -std=c++17 -Wall -Wextra -O2 -Isrc -c tests/test_initial_solution.cpp -o build/tests/test_initial_solution.o
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -c tests/test_main.cpp -o build/tests/test_main.o
 
 echo Linking test runner...
-g++ -std=c++17 -Wall -Wextra -O2 -o bin/test_runner.exe build/core/data_structures.o build/core/instance_parser.o build/core/instance.o build/constraints/hard_constraints.o build/constraints/soft_constraints.o build/constraints/constraint_evaluator.o build/tests/test_runner.o build/tests/test_hard_constraints.o build/tests/test_soft_constraints.o build/tests/test_solution_validator.o build/tests/test_instance10_validator.o build/tests/test_main.o
+g++ -std=c++17 -Wall -Wextra -O2 -o bin/test_runner.exe build/core/data_structures.o build/core/instance_parser.o build/core/instance.o build/constraints/hard_constraints.o build/constraints/soft_constraints.o build/constraints/constraint_evaluator.o build/initial_solution.o build/utils/random.o build/tests/test_runner.o build/tests/test_hard_constraints.o build/tests/test_soft_constraints.o build/tests/test_solution_validator.o build/tests/test_instance10_validator.o build/tests/test_initial_solution.o build/tests/test_main.o
 
 echo Compiling optimized main...
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -o bin/nsp_optimized.exe main_optimized.cpp build/core/data_structures.o build/core/instance_parser.o build/core/instance.o
@@ -43,7 +45,7 @@ echo Compiling utils modules...
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc -c src/utils/random.cpp -o build/utils/random.o
 
 echo Compiling refactored main...
-g++ -std=c++17 -Wall -Wextra -O2 -Isrc -o bin/nsp_refactored.exe main_refactored.cpp build/core/data_structures.o build/core/instance_parser.o build/core/instance.o build/constraints/hard_constraints.o build/constraints/soft_constraints.o build/constraints/constraint_evaluator.o build/neighborhood.o build/simulated_annealing.o build/incremental_evaluator.o build/utils/random.o
+g++ -std=c++17 -Wall -Wextra -O2 -Isrc -o bin/nsp_refactored.exe main_refactored.cpp build/core/data_structures.o build/core/instance_parser.o build/core/instance.o build/constraints/hard_constraints.o build/constraints/soft_constraints.o build/constraints/constraint_evaluator.o build/neighborhood.o build/initial_solution.o build/simulated_annealing.o build/incremental_evaluator.o build/utils/random.o
 
 echo Compiling original for comparison...
 g++ -std=c++17 -Wall -Wextra -O2 -o bin/nsp_original.exe main.cpp

@@ -83,7 +83,9 @@
 
 - [ ] 5. Implement research-based initial solution generation (Highest Impact)
 
-  - [-] 5.1 Implement the 5-step feasible initial solution heuristic
+  - [x] 5.1 Implement the 5-step feasible initial solution heuristic
+
+
 
 
 

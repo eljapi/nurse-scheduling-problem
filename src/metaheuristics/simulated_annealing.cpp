@@ -1,5 +1,6 @@
 #include "simulated_annealing.h"
 #include "neighborhood.h"
+#include "initial_solution.h"
 #include "../core/data_structures.h"
 #include "../constraints/incremental_evaluator.h"
 #include "../utils/random.h"
@@ -179,6 +180,7 @@ SimulatedAnnealing::SimulatedAnnealing(const Instance& instance, ConstraintEvalu
       neighborhood(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes(), evaluator),
       tabu_memory(50), // Tabu memory size
       div_int_strategies(instance, evaluator),
+      initial_solution_generator(instance),
       initial_temperature(initial_temp),
       cooling_rate(cooling),
       max_iterations(max_iter),
@@ -190,8 +192,10 @@ SimulatedAnnealing::SimulatedAnnealing(const Instance& instance, ConstraintEvalu
       elite_size(5) {}
 
 Schedule SimulatedAnnealing::solve(SolveMode mode) {
-    Schedule current_schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
-    current_schedule.randomize(instance.getNumShiftTypes());
+    // Use the 5-step feasible initial solution heuristic instead of random initialization
+    std::cout << "Generating feasible initial solution using 5-step heuristic..." << std::endl;
+    Schedule current_schedule = initial_solution_generator.generateFeasibleSolution();
+    std::cout << "Initial solution generated. Starting simulated annealing..." << std::endl;
     return solve(current_schedule, mode);
 }
 
@@ -343,6 +347,10 @@ Schedule SimulatedAnnealing::solve(const Schedule& initial_schedule, SolveMode m
     }
 
     return best_schedule;
+}
+
+Schedule SimulatedAnnealing::generateFeasibleInitialSolution() {
+    return initial_solution_generator.generateFeasibleSolution();
 }
 
 double SimulatedAnnealing::acceptance(double delta, double temperature) {

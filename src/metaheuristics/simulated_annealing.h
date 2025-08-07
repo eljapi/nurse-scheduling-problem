@@ -6,6 +6,7 @@
 #include "../constraints/incremental_evaluator.h"
 #include "../core/move.h"
 #include "neighborhood.h"
+#include "initial_solution.h"
 #include <unordered_set>
 #include <deque>
 #include <vector>
@@ -54,6 +55,9 @@ public:
 
     Schedule solve(SolveMode mode);
     Schedule solve(const Schedule& initial_schedule, SolveMode mode);
+    
+    // Generate feasible initial solution using the 5-step heuristic
+    Schedule generateFeasibleInitialSolution();
 
 private:
     const Instance& instance;
@@ -62,6 +66,7 @@ private:
     Neighborhood neighborhood;
     TabuMemory tabu_memory;
     DiversificationIntensification div_int_strategies;
+    InitialSolutionGenerator initial_solution_generator;
 
     // SA Parameters
     double initial_temperature;

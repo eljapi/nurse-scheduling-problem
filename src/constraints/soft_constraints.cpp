@@ -102,11 +102,11 @@ int SoftConstraints::evaluateCoverageRequirements(const Schedule& schedule) cons
                 if (actual_coverage > required_coverage) {
                     // Over-staffing penalty
                     int excess = actual_coverage - required_coverage;
-                    score += excess * cover.Weight_for_over;
+                    score -= excess * abs(cover.Weight_for_over);
                 } else if (actual_coverage < required_coverage) {
                     // Under-staffing penalty
                     int deficit = required_coverage - actual_coverage;
-                    score += deficit * cover.Weight_for_under;
+                    score -= deficit * abs(cover.Weight_for_under);
                 }
                 // If actual_coverage == required_coverage, no penalty (score += 0)
             }

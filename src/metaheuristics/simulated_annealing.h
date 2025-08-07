@@ -15,6 +15,7 @@ public:
                        double initial_temp, double cooling, int max_iter, int stagnation);
 
     Schedule solve(SolveMode mode);
+    Schedule solve(const Schedule& initial_schedule, SolveMode mode);
 
 private:
     const Instance& instance;

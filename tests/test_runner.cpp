@@ -1,6 +1,7 @@
 #include "test_runner.h"
 #include "test_hard_constraints.h"
 #include "test_soft_constraints.h"
+#include "test_instance10_validator.h"
 #include "../src/core/instance_parser.h"
 #include "../src/core/instance.h"
 #include "../src/core/data_structures.h"
@@ -367,6 +368,8 @@ void TestRunner::runAllTests() {
     std::cout << "=== Running All Tests ===" << std::endl;
     
     runBasicTests();
+    
+    registerInstance10ValidatorTests(*this);
     
     // Test all available instances
     std::vector<std::string> instances = {

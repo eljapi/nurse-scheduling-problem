@@ -29,10 +29,12 @@ echo Compiling tests...
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -Isrc/constraints -c tests/test_runner.cpp -o build/tests/test_runner.o
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -Isrc/constraints -c tests/test_hard_constraints.cpp -o build/tests/test_hard_constraints.o
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -Isrc/constraints -c tests/test_soft_constraints.cpp -o build/tests/test_soft_constraints.o
+g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -Isrc/constraints -c tests/test_solution_validator.cpp -o build/tests/test_solution_validator.o
+g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -Isrc/constraints -c tests/test_instance10_validator.cpp -o build/tests/test_instance10_validator.o
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -c tests/test_main.cpp -o build/tests/test_main.o
 
 echo Linking test runner...
-g++ -std=c++17 -Wall -Wextra -O2 -o bin/test_runner.exe build/core/data_structures.o build/core/instance_parser.o build/core/instance.o build/constraints/hard_constraints.o build/constraints/soft_constraints.o build/constraints/constraint_evaluator.o build/tests/test_runner.o build/tests/test_hard_constraints.o build/tests/test_soft_constraints.o build/tests/test_main.o
+g++ -std=c++17 -Wall -Wextra -O2 -o bin/test_runner.exe build/core/data_structures.o build/core/instance_parser.o build/core/instance.o build/constraints/hard_constraints.o build/constraints/soft_constraints.o build/constraints/constraint_evaluator.o build/tests/test_runner.o build/tests/test_hard_constraints.o build/tests/test_soft_constraints.o build/tests/test_solution_validator.o build/tests/test_instance10_validator.o build/tests/test_main.o
 
 echo Compiling optimized main...
 g++ -std=c++17 -Wall -Wextra -O2 -Isrc/core -o bin/nsp_optimized.exe main_optimized.cpp build/core/data_structures.o build/core/instance_parser.o build/core/instance.o

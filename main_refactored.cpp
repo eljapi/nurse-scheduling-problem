@@ -63,19 +63,38 @@ int main(int argc, char **argv) {
     
     cout << "\n=== PHASE 1: Searching for a feasible solution... ===" << endl;
     time(&start);
-    Schedule feasible_schedule = sa.solve(SolveMode::Feasibility);
+    Schedule best_schedule = sa.solve(SolveMode::Feasibility);
     time(&end);
     
-    double hard_score = evaluator.getHardConstraintViolations(feasible_schedule);
-    Schedule best_schedule = feasible_schedule;
+    Schedule best_overall_feasible_schedule = best_schedule;
+    double hard_score = evaluator.getHardConstraintViolations(best_overall_feasible_schedule);
 
     if (hard_score < 0) {
-        cout << "\nCould not find a feasible solution in Phase 1." << endl;
+        cout << "\nCould not find a feasible solution in Phase 1. The reported solution is the best infeasible one found." << endl;
     } else {
-        cout << "\nFeasible solution found! Starting PHASE 2: Optimization." << endl;
+        cout << "\nFeasible solution found! Writing to debug file and starting PHASE 2: Optimization." << endl;
+        
+        // Write the first feasible solution to a debug file
+        string debug_out_line = bestSolutionPrint(best_overall_feasible_schedule, instance);
+        string debug_outfile_name = "./instancias_solucion/feasible_solution_debug.txt";
+        ofstream debug_outdata(debug_outfile_name);
+        debug_outdata << "--- FIRST FEASIBLE SOLUTION ---" << endl;
+        debug_outdata << "Hard Score: " << hard_score << endl;
+        debug_outdata << "Soft Score: " << evaluator.getSoftConstraintViolations(best_overall_feasible_schedule) << endl;
+        debug_outdata << debug_out_line;
+        debug_outdata.close();
+
         SimulatedAnnealing sa_optimizer(instance, evaluator, initial_temp / 10, cooling_rate, iterations, stagnation_limit);
         
-        best_schedule = sa_optimizer.solve(SolveMode::Optimization);
+        Schedule optimized_schedule = sa_optimizer.solve(best_overall_feasible_schedule, SolveMode::Optimization);
+
+        // Check if the optimized schedule is feasible and better than the one from Phase 1
+        if (evaluator.isFeasible(optimized_schedule) && 
+            evaluator.getSoftConstraintViolations(optimized_schedule) > evaluator.getSoftConstraintViolations(best_overall_feasible_schedule)) {
+            best_schedule = optimized_schedule;
+        } else {
+            best_schedule = best_overall_feasible_schedule; // Stick with the original feasible solution
+        }
     }
     
     double time_taken = double(end - start);

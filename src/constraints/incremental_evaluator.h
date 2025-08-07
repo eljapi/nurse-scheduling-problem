@@ -13,7 +13,8 @@ public:
     double getSoftScore() const;
     Schedule getCurrentSchedule() const;
     void applyMove(const Move& move);
-    double getDelta(const Move& move);
+    double getHardScoreDelta(const Move& move);
+    double getSoftScoreDelta(const Move& move);
     void reset(const Schedule& schedule);
 
 private:

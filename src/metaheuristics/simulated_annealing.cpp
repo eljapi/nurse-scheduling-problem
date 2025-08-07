@@ -22,6 +22,11 @@ SimulatedAnnealing::SimulatedAnnealing(const Instance& instance, ConstraintEvalu
 Schedule SimulatedAnnealing::solve(SolveMode mode) {
     Schedule current_schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
     current_schedule.randomize(instance.getNumShiftTypes());
+    return solve(current_schedule, mode);
+}
+
+Schedule SimulatedAnnealing::solve(const Schedule& initial_schedule, SolveMode mode) {
+    Schedule current_schedule = initial_schedule;
 
     incremental_evaluator.reset(current_schedule);
 
@@ -35,14 +40,33 @@ Schedule SimulatedAnnealing::solve(SolveMode mode) {
     for (int i = 0; i < max_iterations; ++i) {
         Move move = neighborhood.getRandomMove(current_schedule);
         
-        double delta = incremental_evaluator.getDelta(move);
+        double delta_hard = incremental_evaluator.getHardScoreDelta(move);
+        double delta_soft = incremental_evaluator.getSoftScoreDelta(move);
+        double new_hard_score = incremental_evaluator.getHardScore() + delta_hard;
 
-        if (acceptance(delta, temperature) > Random::getDouble(0.0, 1.0)) {
+        bool accept_move = false;
+        double random_prob = Random::getDouble(0.0, 1.0);
+
+        if (incremental_evaluator.getHardScore() < 0) {
+            if (acceptance(delta_hard, temperature) > random_prob) {
+                accept_move = true;
+            }
+        } else {
+            if (new_hard_score < 0) {
+                accept_move = false;
+            } else {
+                if (acceptance(delta_soft, temperature) > random_prob) {
+                    accept_move = true;
+                }
+            }
+        }
+
+        if (accept_move) {
             incremental_evaluator.applyMove(move);
             current_schedule = incremental_evaluator.getCurrentSchedule();
         }
 
-        if (incremental_evaluator.getHardScore() > best_hard_score || 
+        if (incremental_evaluator.getHardScore() > best_hard_score ||
             (incremental_evaluator.getHardScore() == best_hard_score && incremental_evaluator.getSoftScore() > best_soft_score)) {
             best_schedule = current_schedule;
             best_hard_score = incremental_evaluator.getHardScore();
@@ -55,28 +79,19 @@ Schedule SimulatedAnnealing::solve(SolveMode mode) {
         if (stagnated > stagnation_limit) {
             std::cout << "--- ESTANCAMIENTO DETECTADO! RECALENTANDO Y PERTURBANDO ---" << std::endl;
             
-            // 1. Vuelve a la mejor solución encontrada hasta ahora.
             current_schedule = best_schedule;
             
-            // 2. Perturba la solución para sacarla del óptimo local.
-            //    Esto es CRÍTICO. Si no la mueves, se volverá a atascar en el mismo sitio.
-            //    Un 10-20% de perturbación suele ser un buen punto de partida.
-            neighborhood.perturb(current_schedule, 0.15); // Perturba el 15% de las asignaciones
+            neighborhood.perturb(current_schedule, 0.15);
 
-            // 3. ¡MUY IMPORTANTE! Resetea el evaluador incremental.
-            //    Como hemos modificado el schedule manualmente, la puntuación cacheada es inválida.
             incremental_evaluator.reset(current_schedule);
             
-            // 4. Recalienta el sistema. Reinicia la temperatura a su valor inicial.
             temperature = initial_temperature; 
             
-            // 5. Resetea el contador de estancamiento.
             stagnated = 0;
         }
 
-        const double MINIMUM_TEMPERATURE = 1e-8; // Un valor pequeño pero no cero
+        const double MINIMUM_TEMPERATURE = 1e-8;
 
-        // Enfría la temperatura, pero no por debajo del mínimo.
         temperature = std::max(temperature * cooling_rate, MINIMUM_TEMPERATURE);
         
         if (i % 100 == 0) {

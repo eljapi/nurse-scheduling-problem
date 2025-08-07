@@ -65,19 +65,19 @@ inline Schedule parseSolution(const std::string& solution_file, const Instance& 
     return schedule;
 }
 
-bool testSolutionFeasibility() {
+bool testInstance10Feasibility() {
     Instance instance;
-    if (!instance.loadFromFile("nsp_instancias/instances1_24/Instance1.txt")) {
+    if (!instance.loadFromFile("nsp_instancias/instances1_24/Instance10.txt")) {
         std::cerr << "Error: Failed to load instance file" << std::endl;
         return false;
     }
 
-    Schedule schedule = parseSolution("instancias_solucion/Instance1.txt", instance);
+    Schedule schedule = parseSolution("instancias_solucion/Instance10.txt", instance);
 
     ConstraintEvaluator evaluator(instance);
     bool feasible = evaluator.isFeasible(schedule);
 
-    std::cout << "Is solution feasible? " << (feasible ? "Yes" : "No") << std::endl;
+    std::cout << "Is solution for Instance 10 feasible? " << (feasible ? "Yes" : "No") << std::endl;
     if (!feasible) {
         std::cout << "Hard constraint violations: " << evaluator.getHardConstraintViolations(schedule) << std::endl;
     }
@@ -85,6 +85,6 @@ bool testSolutionFeasibility() {
     return feasible;
 }
 
-void registerSolutionValidatorTests(TestRunner& runner) {
-    runner.logTest("Solution Feasibility", testSolutionFeasibility());
+void registerInstance10ValidatorTests(TestRunner& runner) {
+    runner.logTest("Instance 10 Solution Feasibility", testInstance10Feasibility());
 }

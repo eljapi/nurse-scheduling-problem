@@ -62,9 +62,10 @@ Schedule DiversificationIntensification::diversifyRestart(const Schedule& curren
 }
 
 Schedule DiversificationIntensification::diversifyRandomRestart(const Schedule& current_best) {
-    Schedule random_schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
-    random_schedule.randomize(instance.getNumShiftTypes());
-    return random_schedule;
+    // Use feasible initial solution instead of random initialization
+    InitialSolutionGenerator generator(instance);
+    Schedule feasible_schedule = generator.generateFeasibleSolution();
+    return feasible_schedule;
 }
 
 Schedule DiversificationIntensification::diversifyGuidedRestart(const Schedule& current_best) {
@@ -407,10 +408,8 @@ void SimulatedAnnealing::updateEliteSolutions(const Schedule& schedule, double h
 
 Schedule SimulatedAnnealing::selectDiversificationBase() {
     if (elite_solutions.empty()) {
-        // Fallback to random schedule
-        Schedule random_schedule(instance.getNumEmployees(), instance.getHorizonDays(), instance.getNumShiftTypes());
-        random_schedule.randomize(instance.getNumShiftTypes());
-        return random_schedule;
+        // Fallback to feasible initial solution instead of random schedule
+        return initial_solution_generator.generateFeasibleSolution();
     }
     
     // Select a random elite solution as base for diversification

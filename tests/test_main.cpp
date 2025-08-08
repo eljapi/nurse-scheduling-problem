@@ -28,8 +28,6 @@ int main() {
 
 void registerInitialSolutionTests(TestRunner& runner) {
     TestInitialSolution initialSolutionTests;
-    
-    runner.addTest("Initial Solution Generation", [&]() {
-        return initialSolutionTests.runAllTests();
-    });
+    bool all_passed = initialSolutionTests.runAllTests();
+    runner.logTest("Initial Solution Generation Suite", all_passed);
 }

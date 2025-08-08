@@ -100,6 +100,10 @@
 
   - [ ] 5.2 Replace random initialization with feasible initial solution
 
+
+
+
+
     - Replace current schedule.randomize() calls with InitialSolutionGenerator::generateFeasibleSolution()
     - Verify that generated initial solutions are feasible or very close to feasible
     - Measure improvement in initial solution quality compared to random initialization

@@ -53,10 +53,28 @@
 
   - [x] 3.3 Implement unified ConstraintEvaluator
 
+
+
     - Create ConstraintEvaluator class that combines hard and soft constraints
     - Replace scattered constraint calls in main loop with unified evaluation
     - Verify Instance1 produces same results with new evaluator
     - _Requirements: 1.1, 1.2, 2.1_
+
+  - [x] 3.4 Implement dynamic penalty weights for adaptive constraint handling
+
+
+
+
+
+
+
+    - Add dynamic weight management to ConstraintEvaluator class with weight map for each hard constraint type
+    - Implement weight update logic that increases penalties for frequently violated constraints
+    - Modify SimulatedAnnealing to periodically update weights based on violation patterns
+    - Add weight update frequency parameter to SA constructor with sensible default (stagnation_limit / 2)
+    - Integrate weight updates into SA main loop to adaptively guide search toward feasible regions
+    - Verify that dynamic weights improve convergence to feasible solutions compared to static penalties
+    - _Requirements: 1.2, 2.1, 5.2_
 
 - [ ] 4. Optimize data structures for better performance
 

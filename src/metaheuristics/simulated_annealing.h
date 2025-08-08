@@ -51,7 +51,8 @@ private:
 class SimulatedAnnealing {
 public:
     SimulatedAnnealing(const Instance& instance, ConstraintEvaluator& evaluator,
-                       double initial_temp, double cooling, int max_iter, int stagnation);
+                       double initial_temp, double cooling, int max_iter, int stagnation,
+                       int weight_update_freq = -1); // Default: stagnation_limit / 2
 
     Schedule solve(SolveMode mode);
     Schedule solve(const Schedule& initial_schedule, SolveMode mode);
@@ -73,6 +74,7 @@ private:
     double cooling_rate;
     int max_iterations;
     int stagnation_limit;
+    int weight_update_frequency;
     
     // Diversification/Intensification parameters
     int restart_count;
@@ -81,12 +83,17 @@ private:
     int diversification_frequency;
     std::vector<Schedule> elite_solutions;
     int elite_size;
+    
+    // Statistics for dynamic weights effectiveness
+    int weighted_moves_accepted;
+    int total_moves_evaluated;
 
     double acceptance(double delta, double temperature);
     bool shouldDiversify(int iterations_since_improvement);
     bool shouldIntensify(int iterations_since_improvement);
     void updateEliteSolutions(const Schedule& schedule, double hard_score, double soft_score);
     Schedule selectDiversificationBase();
+    Schedule pathRelinkingWithElites();
 };
 
 #endif // SIMULATED_ANNEALING_H
